@@ -17,9 +17,10 @@ class Player:
     def check_roll(self, driver):
         try:
             rolls = WebDriverWait(driver, 5).until(EC.visibility_of_all_elements_located(
-                (By.XPATH, f'//div[@class="message rollresult you player-{self.id} quantumRoll"]')))
+                (By.XPATH, f'//div[@data-playerid="{self.id}"]')))
         except:
             # If there are no rolls, just return with nothing
+            self.read_msg = []
             return
 
         if len(self.read_msg) == 0:  # If it's the first time the program is called, don't read old messages
@@ -35,6 +36,11 @@ class Player:
                 continue
             # Save the message as read
             self.read_msg.append(m_id)
+
+            # In case there are no rolls in the message
+            if roll_message.split("rolling ")[-1].split("\n")[0].find("d") == -1:
+                print('here')
+                return
 
             # Go through the actual values of the dice
             print("calculating...")
@@ -75,7 +81,11 @@ def main():
 
     print("start")
     while True:
-        go_through_players(driver, players)
+        try:
+            go_through_players(driver, players)
+        except:
+            print('error')
+            read_msgs = []
 
 
 if __name__ == "__main__":

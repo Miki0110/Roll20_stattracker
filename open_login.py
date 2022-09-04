@@ -67,7 +67,7 @@ def ret_stats(roll_message):
 
     # Using the structure of the string to extract the rolled dice and result of rolling
     roll_input = roll_message.split("rolling ")[-1].split("\n")[0]
-    roll_result = int(roll_message.split("=")[-1])
+    roll_result = int(float(roll_message.split("=")[-1].split(" ")[0]))
 
     # Find the dice and the amount
     dice = []
@@ -102,9 +102,15 @@ def ret_stats(roll_message):
             dice_faces.append(die)
         # remove the found dice from the modifiers string
         modifiers = modifiers.replace(f'd{die}', '')
+
+    # Another shitty fix for now
+    if len(dice_faces) >= 15:
+        print("Too many dice")
+        return
+
     # Find every case of "+ NUMBER" or "- NUMBER"
-    modifiers1 = re.findall(r'[+\-*/] \d', modifiers)
-    modifiers2 = re.findall(r'[+\-*/]\d', modifiers)
+    modifiers1 = re.findall(r'[+\-*/] \d+', modifiers)
+    modifiers2 = re.findall(r'[+\-*/]\d+', modifiers)
 
     # add the numbers together if there are any
     if len(modifiers1) != 0 or len(modifiers2) != 0:
@@ -143,11 +149,14 @@ def ret_stats(roll_message):
 
 # Function used to figure out how hard it is to calculate
 def powerList(myList):
-    if len(myList) <= 1:
-        return myList[0]
-    # Take the power of elements one by one
-    result = myList[0] ** (sum(myList[1:])/myList[0]+1)
-    return result
+    try:
+        if len(myList) <= 1:
+            return myList[0]
+        # Take the power of elements one by one
+        result = myList[0] ** (sum(myList[1:])/myList[0]+1)
+        return result
+    except:
+        return 0
 
 
 # A function for checking stat calls
@@ -158,6 +167,7 @@ def ret_input(driver, read_msgs, players):
         texts = WebDriverWait(driver, 5).until(
             EC.visibility_of_all_elements_located((By.XPATH, '//*[@id="textchat"]//div[contains(text(),"--stats")]')))
     except:
+        read_msgs = []
         return
 
     if len(read_msgs) == 0:
@@ -165,7 +175,12 @@ def ret_input(driver, read_msgs, players):
             read_msgs.append(str(text.get_attribute("data-messageid")))
 
     for text in texts:
-        m_id = str(text.get_attribute("data-messageid"))
+        while True:
+            try:
+                m_id = str(text.get_attribute("data-messageid"))
+                break
+            except:
+                pass
         text_message = str(text.get_attribute("innerText"))
 
         # Check if this message has been read before
