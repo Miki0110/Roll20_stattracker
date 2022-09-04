@@ -1,2 +1,2 @@
 /.pytest_cache/
-git update-index --assume-unchanged data.py
+git update-index --assume-unchanged /data.py
