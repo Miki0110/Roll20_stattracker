@@ -55,10 +55,12 @@ class Player:
 
     # Retrieve data from the object
     def ret_stats(self):  # Returns (rolls, average roll, best roll, best roll index)
-            avg_roll = sum(self.cdfs) / len(self.cdfs)
-            best_roll = max(self.cdfs)
-            b_index = self.cdfs.index(best_roll)
-            return self.rolls, avg_roll, best_roll, b_index
+        if len(self.cdfs) == 0:
+            return ['no rolls', 'no rolls', 'no rolls', -1]
+        avg_roll = sum(self.cdfs) / len(self.cdfs)
+        best_roll = max(self.cdfs)
+        b_index = self.cdfs.index(best_roll)
+        return self.rolls, avg_roll, best_roll, b_index
 
 
 # Function to loop through each player defined

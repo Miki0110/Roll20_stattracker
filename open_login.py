@@ -193,9 +193,11 @@ def ret_input(driver, read_msgs, players):
         p_index = int(player_ids.index(target_p)/2)
 
         rolls, avg_roll, best_roll, b_index = players[p_index].ret_stats()
-
-        m_output = f'Player {target_p}\nAverage roll chance (1-cdf) = {float(1-avg_roll)}\nBest roll "{rolls[b_index*2]}' \
-                   f' = {rolls[b_index*2+1]}" with a {float((1-best_roll)*100)}% chance'
+        if b_index != -1:
+            m_output = f'Player {target_p}\nAverage roll chance (1-cdf) = {float(1-avg_roll)}\nBest roll "{rolls[b_index*2]}' \
+                       f' = {rolls[b_index*2+1]}" with a {float((1-best_roll)*100)}% chance'
+        else:
+            m_output = f'Player {target_p} has not rolled yet'
 
         text_area = driver.find_element(By.XPATH, '// *[ @ id = "textchat-input"] / textarea')
         text_area.send_keys(m_output)
