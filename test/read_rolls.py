@@ -1,4 +1,4 @@
-import open_login
+import playerClass
 import schedule, time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait

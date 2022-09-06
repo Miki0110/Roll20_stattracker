@@ -1,4 +1,4 @@
-import open_login as func
+import playerClass as func
 from data import player_ids
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
