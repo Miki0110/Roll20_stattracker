@@ -49,8 +49,10 @@ class Player:
                 self.cdfs.append(cdf)
                 self.rolls.append(roll_inp)
                 self.rolls.append(result)
+                return mean, pmf, 1-cdf
             else:  # If the message contains too many dice, the cdf and pdf will be skipped
                 print(f'Player {self.name} rolls\nMean = {float(mean)}')
+                return mean, pmf, cdf
 
     # Retrieve data from the object
     def curr_stats(self):  # Returns (rolls, average roll, best roll, best roll index)
@@ -65,50 +67,6 @@ class Player:
 # Simpel index list function
 def find_indexes(s, ch):
     return [i for i, ltr in enumerate(s) if ltr == ch]
-
-
-# A function for checking stat calls
-def ret_input(driver, read_msgs, players):
-    from data import player_ids
-    try:
-        texts = WebDriverWait(driver, 5).until(
-            EC.visibility_of_all_elements_located((By.XPATH, '//*[@id="textchat"]//div[contains(text(),"--stats")]')))
-    except:
-        read_msgs = []
-        return
-
-    if len(read_msgs) == 0:
-        for text in texts:
-            read_msgs.append(str(text.get_attribute("data-messageid")))
-
-    for text in texts:
-        while True:
-            try:
-                m_id = str(text.get_attribute("data-messageid"))
-                break
-            except:
-                pass
-        text_message = str(text.get_attribute("innerText"))
-
-        # Check if this message has been read before
-        if m_id in read_msgs:
-            continue
-
-        read_msgs.append(m_id)
-
-        target_p = text_message.split("--stats ")[-1]
-        p_index = int(player_ids.index(target_p)/2)
-
-        rolls, avg_roll, best_roll, b_index = players[p_index].curr_stats()
-        if b_index != -1:
-            m_output = f'Player {target_p}\nAverage roll chance (1-cdf) = {float(1-avg_roll)}\nBest roll "{rolls[b_index*2]}' \
-                       f' = {rolls[b_index*2+1]}" with a {float((1-best_roll)*100)}% chance'
-        else:
-            m_output = f'Player {target_p} has not rolled yet'
-
-        text_area = driver.find_element(By.XPATH, '// *[ @ id = "textchat-input"] / textarea')
-        text_area.send_keys(m_output)
-        text_area.send_keys(Keys.ENTER)
 
 
 # function for retrieving the dice rolls
@@ -209,3 +167,77 @@ def powerList(myList):
         return result
     except:
         return 0
+
+
+# A function for checking stat calls
+def ret_input(driver, read_msgs, players, last_roll):
+    from data import player_ids
+
+    try:
+        texts = WebDriverWait(driver, 5).until(
+            EC.visibility_of_all_elements_located((By.XPATH, '//*[@id="textchat"]//div[contains(text(),"--stats")]')))
+    except:
+        read_msgs = []
+        return
+
+    if len(read_msgs) == 0:
+        for text in texts:
+            read_msgs.append(str(text.get_attribute("data-messageid")))
+
+    for text in texts:
+        m_id = str(text.get_attribute("data-messageid"))
+        text_message = str(text.get_attribute("innerText"))
+
+        # Check if this message has been read before
+        if m_id in read_msgs:
+            continue
+        # Save msg ID so it's skipped next time
+        read_msgs.append(m_id)
+
+        command = text_message.split("--stats ")[-1]
+
+        # Go through possible commands
+        if command in player_ids:
+            p_index = int(player_ids.index(command) / 2)  # Player index
+            m_output = write_stats(players[p_index])
+        elif "last" == command:
+            m_output = write_lastroll(last_roll)
+        else:
+            print("Command not recognised")
+
+        print20(driver, '(‎')
+        print20(driver, f'**---------------------**')
+        print20(driver, m_output)
+        print20(driver, f'**---------------------**')
+
+
+# Function to find and write in the chat bar
+def print20(driver, message):
+    text_area = driver.find_element(By.XPATH, '// *[ @ id = "textchat-input"] / textarea')
+    text_area.send_keys(message)
+    text_area.send_keys(Keys.ENTER)
+
+
+# Writing stats out in chat
+def write_stats(player):
+    name = player.name
+    rolls, avg_roll, best_roll, b_index = player.curr_stats()
+
+    if b_index != -1:
+        m_output = f'\n**Player {name}**\nAverage roll chance (1-cdf) = **{float(1 - avg_roll)}**\nBest roll **"{rolls[b_index * 2]}' \
+                   f' = {rolls[b_index * 2 + 1]}"** with a **{float((1 - best_roll) * 100)}%** chance'
+    else:
+        m_output = f'Player {name} has not rolled yet'
+    return m_output
+
+
+def write_lastroll(last_roll):
+    mean, pmf, cdf = last_roll
+    if cdf != "unavailable":
+        m_output = f'\n**Last roll:**\nExpected Value = **{float(mean)}**\nWith a **{float(cdf)*100}%** of rolling that or higher,' \
+                   f' and a **{float(pmf)*100}%** chance for the exact value.'
+        return m_output
+    else:
+        m_output = f'\n**Last roll:**\nExpected Value = **{float(mean)}**\n' \
+                   f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
+        return m_output

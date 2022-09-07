@@ -5,9 +5,15 @@ import startUp
 # Function to loop through each player defined
 def go_through_players(driver, players):
     for player in players:
-        player.check_roll(driver)
-    # Check for command inputs
-    func.ret_input(driver, read_msgs, players)
+        rolldata = player.check_roll(driver)
+    return rolldata
+
+
+
+
+# Function for checking for commands
+def check_commands(driver, players, last_roll):
+    func.ret_input(driver, read_msgs, players, last_roll)
 
 
 def main():
@@ -15,15 +21,20 @@ def main():
     players = startUp.loginRoll20(driver)
 
     global read_msgs
+
+    last_roll = 0,0,0
     read_msgs = []
 
     print("start")
     while True:
         try:
-            go_through_players(driver, players)
-        except:
-            print('error')
-        #    read_msgs = []
+            roll_data = go_through_players(driver, players)
+            if roll_data != None:
+                last_roll = roll_data
+            check_commands(driver, players, last_roll)
+        except Exception as e:
+            print(e)
+            read_msgs = []
 
 
 if __name__ == "__main__":
