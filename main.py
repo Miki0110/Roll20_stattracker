@@ -6,9 +6,8 @@ import startUp
 def go_through_players(driver, players):
     for player in players:
         rolldata = player.check_roll(driver)
+
     return rolldata
-
-
 
 
 # Function for checking for commands
