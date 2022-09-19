@@ -2,7 +2,7 @@ from sympy import stats
 import playerClass as func
 import re
 
-rolls = ["rolling 4d20\n(\n14\n)\n=50", "August 29, 2022 6:35PM\nElona Winterbreeze:rolling d6 + 4 Magic damage\n(\n1\n)+4\n=5","Miki P. (GM):rolling d20+5+d8+d10\n(\n5\n)+5+(\n1\n)+(\n8\n)\n=19"]
+rolls = ["rolling 3d20\n(\n14\n)\n=50", "August 29, 2022 6:35PM\nElona Winterbreeze:rolling d6 + 4 Magic damage\n(\n1\n)+4\n=5","Miki P. (GM):rolling d20+5+d8+d10\n(\n5\n)+5+(\n1\n)+(\n8\n)\n=19"]
 
 
 # Simpel index list function

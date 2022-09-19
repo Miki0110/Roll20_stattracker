@@ -26,7 +26,7 @@ class Player:
 
         for roll in rolls:  # Go through all the messages
             m_id = str(roll.get_attribute("data-messageid"))  # message ID
-            roll_message = str(roll.get_attribute("outerText"))  # Roll result
+            roll_message = str(roll.get_attribute("innerText"))  # Roll result
 
             # Check if this message has been read before
             if m_id in self.read_msg:
@@ -96,11 +96,12 @@ def ret_input(driver, read_msgs, players, last_roll):
             m_output = write_lastroll(last_roll)
         else:
             print("Command not recognised")
+            return
 
-        print20(driver, '(‎')
-        print20(driver, f'**---------------------**')
+        print20(driver, '‎')
+        print20(driver, f'**--------------------**')
         print20(driver, m_output)
-        print20(driver, f'**---------------------**')
+        print20(driver, f'**--------------------**')
 
 
 # Function to find and write in the chat bar

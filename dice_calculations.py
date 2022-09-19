@@ -10,7 +10,9 @@ def find_indexes(s, ch):
 def ret_rolls(roll_message):
     import re
     # Using the structure of the string to extract the rolled dice and result of rolling
-    roll_input = roll_message.split("rolling ")[-1].split("\n")[0]
+    roll_input = roll_message.split("rolling ")[-1].split("(")[0]
+    print(roll_message.split("rolling ")[-1].split("("))
+    #print(roll_input)
     roll_result = int(float(roll_message.split("=")[-1].split(" ")[0]))
 
     # Find the dice and the amount
@@ -57,6 +59,7 @@ def ret_rolls(roll_message):
     # add the numbers together if there are any
     if len(modifiers1) != 0 or len(modifiers2) != 0:
         modifiers = eval(''.join(modifiers1)+''.join(modifiers2))
+        #print(modifiers)
     else:
         modifiers = 0
 

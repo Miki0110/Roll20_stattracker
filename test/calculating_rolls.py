@@ -1,24 +1,19 @@
 import numpy as np
 import dice_calculations as dc
 from fractions import Fraction
-rolls = [[20], [20], [20]]
+dice = [20, 20, 20]
 
-for dice in rolls:
-    means = dc.ret_mean(dice)
-    mean = sum(means)
+means = dc.ret_mean(dice)
+mean = sum(means)
 
-    # Check if the cdf is manageable
-    pos_rolls = dc.powerList(dice)
-    print(pos_rolls)
+# Using the density and keys function I can extract all possible outcomes
+possible_vals, pmf = dc.ret_pmf(dice)
 
-    # Using the density and keys function I can extract all possible outcomes
-    possible_vals, pmf = dc.ret_pmf(dice)
-
-    # Calculate the cdf by adding up all the pmfs
-    res_index = np.where(possible_vals == 20)[0][0]
-    cdf = sum(pmf[0:res_index])
-    print(pmf)
-    print(cdf)
+# Calculate the cdf by adding up all the pmfs
+res_index = np.where(possible_vals == 40)[0][0]
+cdf = sum(pmf[0:res_index])
+print(cdf)
+print(mean)
 
 
 # for roll in rolls:
