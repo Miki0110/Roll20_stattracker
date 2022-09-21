@@ -18,7 +18,7 @@ class Player:
         except:
             # If there are no rolls, just return with nothing
             self.read_msg = []
-            return
+            return 0
 
         if len(self.read_msg) == 0:  # If it's the first time the program is called, don't read old messages
             for roll in rolls:
@@ -36,8 +36,7 @@ class Player:
 
             # In case there are no rolls in the message
             if roll_message.split("rolling ")[-1].split("\n")[0].find("d") == -1:
-                print('here')
-                return
+                return 0
 
             # Go through the actual values of the dice
             print("calculating...")
@@ -47,10 +46,10 @@ class Player:
                 self.cdfs.append(cdf)
                 self.rolls.append(roll_inp)
                 self.rolls.append(result)
-                return mean, pmf, 1-cdf
+                return roll_inp, result, self.name
             else:  # If the message contains too many dice, the cdf and pdf will be skipped
                 print(f'Player {self.name} rolls\nMean = {float(mean)}')
-                return mean, pmf, cdf
+                return 0
 
     # Retrieve data from the object
     def curr_stats(self):  # Returns (rolls, average roll, best roll, best roll index)

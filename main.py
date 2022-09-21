@@ -26,14 +26,14 @@ def main():
 
     print("start")
     while True:
-        try:
+        #try:
             roll_data = go_through_players(driver, players)
             if roll_data != None:
                 last_roll = roll_data
             check_commands(driver, players, last_roll)
-        except Exception as e:
-            print(e)
-            read_msgs = []
+        #except Exception as e:
+        #    print(e)
+        #    read_msgs = []
 
 
 if __name__ == "__main__":

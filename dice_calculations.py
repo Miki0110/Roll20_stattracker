@@ -66,13 +66,30 @@ def ret_rolls(roll_message):
     # Remove the modifier amount from the roll result
     roll_result = roll_result - modifiers
 
+    # Rewrite the input so that it can be cleaned and reprinted
+    roll_input = ''
+    d, c = np.unique(np.asarray(dice),return_counts=True)
+    for i in range(len(d)):
+        roll_input = roll_input+f'{c[i]}d{d[i]}+'
+    roll_input = roll_input+f'{modifiers}'
+
+    calcs = calc_dice(dice, roll_result)
+    if calcs[1] == -1:
+        return roll_input, roll_result + modifiers, calcs[0] + modifiers, "unavailable", "unavailable"
+    else:
+        return roll_input, roll_result + modifiers, calcs[0]+modifiers, calcs[1], calcs[2]
+
+
+def calc_dice(dice, roll_result):
+    # Retrieve mean
     means = ret_mean(dice)
     mean = sum(means)
 
     # Check if the cdf is manageable
     pos_rolls = powerList(dice)
-    if pos_rolls > 8100:
-        return roll_input, roll_result + modifiers, mean + modifiers, "unavailable", "unavailable"
+    print(f'{dice}\n which is {pos_rolls}')
+    if pos_rolls > 160000:
+        return mean, -1
 
     # Using the density and keys function I can extract all possible outcomes
     possible_vals, pmf = ret_pmf(dice)
@@ -80,8 +97,7 @@ def ret_rolls(roll_message):
     # Calculate the cdf by adding up all the pmfs
     res_index = np.where(possible_vals == roll_result)[0][0]
     cdf = sum(pmf[0:res_index])
-
-    return roll_input, roll_result + modifiers, mean+modifiers, pmf[res_index], cdf
+    return mean, pmf[res_index], cdf
 
 
 # Function used to figure out how hard it is to calculate
@@ -99,7 +115,7 @@ def powerList(myList):
 # Retrieve the pmf
 def ret_pmf(dice):
     outcomes = ret_outcomes(dice, len(dice), [])
-    chance = Fraction(np.prod(1 / np.asarray(dice))).limit_denominator(10000)
+    chance = Fraction(np.prod(1 / np.asarray(dice))).limit_denominator(1000000)
     return outcomes[0], outcomes[1]*chance  # (possible rolls, pmf)
 
 
