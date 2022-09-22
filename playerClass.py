@@ -134,3 +134,14 @@ def write_lastroll(last_roll):
         m_output = f'\n**Last roll:**\nExpected Value = **{float(mean)}**\n' \
                    f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
         return m_output
+
+
+# Retrieve dice from the already gone through dice rolls
+def ret_dice(message):
+    import re
+    d = []
+    for roll in (re.findall(r'\d+d\d+', message)):
+        roll = roll.split('d')
+        for i in range(int(roll[0])):
+            d.append(roll[1])
+    return d, int(message.split('+')[-1])

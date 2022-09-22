@@ -1,7 +1,8 @@
 import startUp
 import dice_calculations as dc
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+import playerClass as func
+
 
 class Session():
     def __init__(self):
@@ -9,18 +10,6 @@ class Session():
         self.last_roll = []
         self.read_msgs = []
         self.players = startUp.loginRoll20(self.driver)
-
-    # Writing stats out in chat
-    def write_stats(self, player):
-        name = player.name
-        rolls, avg_roll, best_roll, b_index = player.curr_stats()
-
-        if b_index != -1:
-            m_output = f'\n**Player {name}**\nAverage roll chance (1-cdf) = **{float(1 - avg_roll)}**\nBest roll **"{rolls[b_index * 2]}' \
-                       f' = {rolls[b_index * 2 + 1]}"** with a **{float((1 - best_roll) * 100)}%** chance'
-        else:
-            m_output = f'Player {name} has not rolled yet'
-        return m_output
 
     # A function for checking stat calls
     def ret_input(self):
@@ -49,7 +38,11 @@ class Session():
             command = text_message.split(';;')[-1].split(' ')
 
             if command[0] == 'help'or command[0] == 'h':
-                m_output = 'wow stuff will come at some point'
+                m_output = '**Current requests**\n```;session {command}``*check rolls for the entire session*\n' \
+                           '```;player {Player name} {command}``*check rolls of a single player*\n' \
+                           '**Current commands**\n```;{request} last {number of rolls}``' \
+                           ' *Returns the chance for a combined number of rolls*\n' \
+                           '```;[request] stats`` *Returns the average and best rolls for the session*'
 
             elif command[0] == 'session' or command[0] == 's':
                 if command[1] == 'last':
@@ -79,24 +72,16 @@ class Session():
                 print("Command not recognised")
                 return
 
-
-            self.print20('‎')
-            self.print20(f'**--------------------**')
-            self.print20(m_output)
-            self.print20(f'**--------------------**')
+            func.print20(self.driver, '‎')
+            func.print20(self.driver, f'**--------------------**')
+            func.print20(self.driver, m_output)
+            func.print20(self.driver, f'**--------------------**')
 
     def go_through_players(self):
         for i, player in enumerate(self.players):
             lr = player.check_roll(self.driver)
             if lr != 0 and lr is not None:
                 self.last_roll.append(lr)
-
-
-    # Function to find and write in the chat bar
-    def print20(self, message):
-        text_area = self.driver.find_element(By.XPATH, '// *[ @ id = "textchat-input"] / textarea')
-        text_area.send_keys(message)
-        text_area.send_keys(Keys.ENTER)
 
     def stat_call(self, target=None):
         if target is None:
@@ -123,7 +108,7 @@ class Session():
                 m_output = f'Player {name} has not rolled yet'
             return m_output
 
-    def last_call(self,target=None, amount=1):
+    def last_call(self, target=None, amount=1):
         if target is None:
             rolls = []
             results = []
@@ -131,7 +116,7 @@ class Session():
             for i in range(amount):
                 roll = self.last_roll[-(i+1)][0]
                 res = self.last_roll[-(i+1)][1]
-                dice, modifier = ret_dice(roll)
+                dice, modifier = func.ret_dice(roll)
                 [rolls.append(int(die)) for die in dice]
                 results.append(res-modifier)
                 modifiers = modifiers+modifier
@@ -151,7 +136,7 @@ class Session():
             for i in range(amount):
                 roll = target.rolls[-(i*2+2)]
                 res = target.rolls[-(i*2+1)]
-                dice, modifier = ret_dice(roll)
+                dice, modifier = func.ret_dice(roll)
                 [rolls.append(int(die)) for die in dice]
                 results.append(res - modifier)
                 modifiers = modifiers + modifier
@@ -165,16 +150,6 @@ class Session():
                            f'Expected Value = **{float(output[0] + modifiers)}**\n' \
                            f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
         return m_output
-
-def ret_dice(message):
-    import re
-    d = []
-    for roll in (re.findall(r'\d+d\d+', message)):
-        roll = roll.split('d')
-        for i in range(int(roll[0])):
-            d.append(roll[1])
-    return d, int(message.split('+')[-1])
-
 
 
 session = Session()

@@ -1,39 +1,180 @@
-import playerClass as func
 import startUp
+import playerClass as pc
+import dice_calculations as dc
+from selenium.webdriver.common.by import By
 
 
-# Function to loop through each player defined
-def go_through_players(driver, players):
-    for player in players:
-        rolldata = player.check_roll(driver)
+# Defining a class for setting up the session
+class Session:
+    def __init__(self):
+        self.driver = startUp.start_driver()  # Driver for controlling chrome
+        self.last_roll = []  # Rolls and results seen during the session
+        self.read_msgs = []  # Read message ids
+        self.players = startUp.loginRoll20(self.driver)  # Players objects made from data in data.py
 
-    return rolldata
+    # A function for checking stat calls
+    def ret_input(self):
+        from data import player_ids
 
+        # First check for messages that contain the ';;' input
+        try:
+            texts = self.driver.find_elements(By.XPATH, '//*[@id="textchat"]//div[contains(text(),";;")]')
+        except:
+            # This is just incase you go into a different roll 20 tab
+            self.read_msgs = []
+            return
 
-# Function for checking for commands
-def check_commands(driver, players, last_roll):
-    func.ret_input(driver, read_msgs, players, last_roll)
+        # At startup the already rolled rolls have to  be saved and skipped
+        if len(self.read_msgs) == 0:
+            for text in texts:
+                self.read_msgs.append(str(text.get_attribute("data-messageid")))
+
+        # Go through messages found
+        for text in texts:
+            m_id = str(text.get_attribute("data-messageid"))  # Message ID
+            text_message = str(text.get_attribute("innerText"))  # The actual message
+
+            # Check if this message has been read before
+            if m_id in self.read_msgs:
+                continue
+            # Save msg ID so it's skipped next time
+            self.read_msgs.append(m_id)
+
+            # By splitting the message between spaces a list of the commands are made
+            command = text_message.split(';;')[-1].split(' ')  # eg. ';;stats last 3' = ['stats', 'last', '3']
+
+            # Check for what kind of request it is
+            # Help request
+            if command[0] == 'help'or command[0] == 'h':
+                m_output = '**Current requests**\n```;session {command}``*check rolls for the entire session*\n' \
+                           '```;player {Player name} {command}``*check rolls of a single player*\n' \
+                           '**Current commands**\n```;{request} last {number of rolls}``' \
+                           ' *Returns the chance for a combined number of rolls*\n' \
+                           '```;[request] stats`` *Returns the average and best rolls for the session*'
+
+            # Session request
+            elif command[0] == 'session' or command[0] == 's':
+                if command[1] == 'last':
+                    if len(command) > 2:
+                        m_output = self.last_call(amount=int(command[2]))
+                    else:
+                        m_output = self.last_call()
+                elif command[1] == 'stats':
+                    m_output = self.stat_call()
+                else:
+                    print("Command not recognised")
+                    return
+
+            # Player request
+            elif command[0] == 'player' or command[0] == 'p':
+                player = self.players[int(player_ids.index(command[1]) / 2)]
+                if command[2] == 'last':
+                    if len(command) > 3:
+                        m_output = self.last_call(player, amount=int(command[3]))
+                    else:
+                        m_output = self.last_call(player)
+                elif command[2] == 'stats':
+                    m_output = self.stat_call(player)
+                else:
+                    print("Command not recognised")
+                    return
+            else:
+                print("Command not recognised")
+                return
+
+            # Print out the results found
+            pc.print20(self.driver, '‎')
+            pc.print20(self.driver, f'**--------------------**')
+            pc.print20(self.driver, m_output)
+            pc.print20(self.driver, f'**--------------------**')
+
+    # Function for checking every player individually
+    def go_through_players(self):
+        for i, player in enumerate(self.players):
+            lr = player.check_roll(self.driver)
+            if lr != 0 and lr is not None:
+                self.last_roll.append(lr)
+
+    # Function that returns the stats of a person or session
+    def stat_call(self, target=None):
+        if target is None:
+            best = [0,0,0,'name']
+            cdfs = []
+            for player in self.players:
+                rolls, _, best_roll, b_index = player.curr_stats()
+                if b_index == -1: #  incase the player has not rolled yet
+                    continue
+                cdfs.append(player.cdfs)
+                if best_roll > best[0]:
+                    best = best_roll, rolls[b_index * 2], rolls[b_index * 2 + 1], player.name
+            avg = sum(cdfs) / len(cdfs)
+            m_output = f'\n**Session stats**\nAverage roll chance (1-cdf) = **{float(1 - avg)}**\nBest roll was **"{best[1]}' \
+                       f' = {best[2]}"** with a **{float((1 - best[0]) * 100)}%** chance, rolled by **{best[3]}**'
+            return m_output
+        else:
+            name = target.name
+            rolls, avg_roll, best_roll, b_index = target.curr_stats()
+            if b_index != -1:
+                m_output = f'\n**Player {name}**\nAverage roll chance (1-cdf) = **{float(1 - avg_roll)}**\nBest roll **"{rolls[b_index * 2]}' \
+                           f' = {rolls[b_index * 2 + 1]}"** with a **{float((1 - best_roll) * 100)}%** chance'
+            else:
+                m_output = f'Player {name} has not rolled yet'
+            return m_output
+
+    # Function that calculates and returns the last roll(s)
+    def last_call(self, target=None, amount=1):
+        if target is None:
+            rolls = []
+            results = []
+            modifiers = 0
+            for i in range(amount):
+                roll = self.last_roll[-(i+1)][0]
+                res = self.last_roll[-(i+1)][1]
+                dice, modifier = pc.ret_dice(roll)
+                [rolls.append(int(die)) for die in dice]
+                results.append(res-modifier)
+                modifiers = modifiers+modifier
+            output = dc.calc_dice(rolls, sum(results))
+            if output[1] != -1:
+                m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results)+modifiers}**\n' \
+                           f'Expected Value = **{float(output[0]+modifiers)}**\nWith a **{(1-float(output[2]))*100}%** of rolling that or higher,' \
+                           f' and a **{float(output[1])*100}%** chance for the exact value.'
+            else:
+                m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results)+modifiers}**\n' \
+                           f'Expected Value = **{float(output[0]+modifiers)}**\n' \
+                           f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
+        else:
+            rolls = []
+            results = []
+            modifiers = 0
+            for i in range(amount):
+                roll = target.rolls[-(i*2+2)]
+                res = target.rolls[-(i*2+1)]
+                dice, modifier = pc.ret_dice(roll)
+                [rolls.append(int(die)) for die in dice]
+                results.append(res - modifier)
+                modifiers = modifiers + modifier
+            output = dc.calc_dice(rolls, sum(results))
+            if output[1] != -1:
+                m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results) + modifiers}**\n' \
+                           f'Expected Value = **{float(output[0] + modifiers)}**\nWith a **{(1 - float(output[2])) * 100}%** of rolling that or higher,' \
+                           f' and a **{float(output[1]) * 100}%** chance for the exact value.'
+            else:
+                m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results) + modifiers}**\n' \
+                           f'Expected Value = **{float(output[0] + modifiers)}**\n' \
+                           f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
+        return m_output
 
 
 def main():
-    driver = startUp.start_driver()
-    players = startUp.loginRoll20(driver)
-
-    global read_msgs
-
-    last_roll = 0,0,0
-    read_msgs = []
-
-    print("start")
+    session = Session()  # Initiate a session
     while True:
-        #try:
-            roll_data = go_through_players(driver, players)
-            if roll_data != None:
-                last_roll = roll_data
-            check_commands(driver, players, last_roll)
-        #except Exception as e:
-        #    print(e)
-        #    read_msgs = []
+        try:
+            session.go_through_players()  # check for rolls
+            session.ret_input()  # check for commands
+        except Exception as e:
+            # Sometimes the selenium makes errors, print them out if that's the case
+            print(e)
 
 
 if __name__ == "__main__":
