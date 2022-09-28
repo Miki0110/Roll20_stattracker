@@ -11,8 +11,6 @@ def ret_rolls(roll_message):
     import re
     # Using the structure of the string to extract the rolled dice and result of rolling
     roll_input = roll_message.split("rolling ")[-1].split("(")[0]
-    print(roll_message.split("rolling ")[-1].split("("))
-    #print(roll_input)
     roll_result = int(float(roll_message.split("=")[-1].split(" ")[0]))
 
     # Find the dice and the amount
@@ -91,7 +89,7 @@ def calc_dice(dice, roll_result):
         return -1
 
     pos_rolls = powerList(dice)
-    print(f'{dice}\n which is {pos_rolls}')
+    #print(f'{dice}\n which is {pos_rolls}')
     if pos_rolls > 160000:
         pmf, cdf = trail_and_error(dice, roll_result)
         return mean, pmf, cdf
