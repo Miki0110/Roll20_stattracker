@@ -47,10 +47,10 @@ def ret_rolls(roll_message):
         # remove the found dice from the modifiers string
         modifiers = modifiers.replace(f'd{die}', '')
 
-    # The players tend to try and break the program by writing an ungodly amount of dice
-    if len(dice) >= 15:
-        print("Too many dice")
-        return
+    # # The players tend to try and break the program by writing an ungodly amount of dice
+    # if len(dice) >= 15:
+    #     print("Too many dice")
+    #     return
 
     # Find every case of "+ NUMBER" or "- NUMBER"
     modifiers1 = re.findall(r'[+\-*/] \d+', modifiers)
@@ -74,8 +74,8 @@ def ret_rolls(roll_message):
     roll_input = roll_input+f'{modifiers}'
 
     calcs = calc_dice(dice, roll_result)
-    if calcs[1] == -1:
-        return roll_input, roll_result + modifiers, calcs[0] + modifiers, "unavailable", "unavailable"
+    if calcs == -1:
+        return -1
     else:
         return roll_input, roll_result + modifiers, calcs[0]+modifiers, calcs[1], calcs[2]
 
@@ -86,10 +86,15 @@ def calc_dice(dice, roll_result):
     mean = sum(means)
 
     # Check if the cdf is manageable
+    if len(dice) > 20:
+        print('too many dice')
+        return -1
+
     pos_rolls = powerList(dice)
     print(f'{dice}\n which is {pos_rolls}')
     if pos_rolls > 160000:
-        return mean, -1
+        pmf, cdf = trail_and_error(dice, roll_result)
+        return mean, pmf, cdf
 
     # Using the density and keys function I can extract all possible outcomes
     possible_vals, pmf = ret_pmf(dice)
@@ -138,3 +143,23 @@ def ret_outcomes(rolls, length,  out, last=0):
             out.append(last + i)
     pos_outcomes = np.unique(np.asarray(out), return_counts=True)
     return pos_outcomes
+
+
+# This is a way to estimate results of many dice rolls
+def trail_and_error(dice, result):
+    from random import randint
+
+    res = []    # list of resulting die rolls
+    length = 500000  # Reasons for this number is simply that around 1-10 seconds calculation time is manageable
+    for _ in range(length):
+        rd = []
+        for die in dice:
+            rd.append(randint(1, die))
+        res.append(sum(rd))
+    value, count = np.unique(np.asarray(res), return_counts=True)
+
+    res_index, = np.where(value == result)[0]
+
+    prob = count / length
+    cdf = sum(prob[0:res_index])
+    return prob[res_index], cdf

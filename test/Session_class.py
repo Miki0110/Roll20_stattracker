@@ -121,14 +121,12 @@ class Session():
                 results.append(res-modifier)
                 modifiers = modifiers+modifier
             output = dc.calc_dice(rolls, sum(results))
-            if output[1] != -1:
+            if output != -1:
                 m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results)+modifiers}**\n' \
                            f'Expected Value = **{float(output[0]+modifiers)}**\nWith a **{(1-float(output[2]))*100}%** of rolling that or higher,' \
                            f' and a **{float(output[1])*100}%** chance for the exact value.'
             else:
-                m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results)+modifiers}**\n' \
-                           f'Expected Value = **{float(output[0]+modifiers)}**\n' \
-                           f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
+                m_output = f'Too many dice to calculate'
         else:
             rolls = []
             results = []
@@ -141,14 +139,12 @@ class Session():
                 results.append(res - modifier)
                 modifiers = modifiers + modifier
             output = dc.calc_dice(rolls, sum(results))
-            if output[1] != -1:
+            if output != -1:
                 m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results) + modifiers}**\n' \
                            f'Expected Value = **{float(output[0] + modifiers)}**\nWith a **{(1 - float(output[2])) * 100}%** of rolling that or higher,' \
                            f' and a **{float(output[1]) * 100}%** chance for the exact value.'
             else:
-                m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results) + modifiers}**\n' \
-                           f'Expected Value = **{float(output[0] + modifiers)}**\n' \
-                           f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
+                m_output = f'Too many dice to calculate'
         return m_output
 
 

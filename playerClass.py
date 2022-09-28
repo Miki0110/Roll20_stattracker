@@ -40,15 +40,16 @@ class Player:
 
             # Go through the actual values of the dice
             print("calculating...")
-            roll_inp, result, mean, pmf, cdf = dc.ret_rolls(roll_message)  # Retrieve the statistical values
-            if cdf != 'unavailable':
+            out = dc.ret_rolls(roll_message)  # Retrieve the statistical values
+            if out != -1:
+                roll_inp, result, mean, pmf, cdf = out
                 print(f'Player {self.name} rolls\nMean = {float(mean)}\npmf = {float(pmf)}\ncdf = {float(1 - cdf)}')
                 self.cdfs.append(cdf)
                 self.rolls.append(roll_inp)
                 self.rolls.append(result)
                 return roll_inp, result, self.name
             else:  # If the message contains too many dice, the cdf and pdf will be skipped
-                print(f'Player {self.name} rolls\nMean = {float(mean)}')
+                print(f'Not possible')
                 return 0
 
     # Retrieve data from the object
