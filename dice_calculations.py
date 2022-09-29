@@ -84,7 +84,7 @@ def calc_dice(dice, roll_result):
     mean = sum(means)
 
     # Check if the cdf is manageable
-    if len(dice) > 20:
+    if len(dice) > 50:
         print('too many dice')
         return -1
 
@@ -145,15 +145,13 @@ def ret_outcomes(rolls, length,  out, last=0):
 
 # This is a way to estimate results of many dice rolls
 def trail_and_error(dice, result):
-    from random import randint
+    from random import choices
 
-    res = []    # list of resulting die rolls
-    length = 500000  # Reasons for this number is simply that around 1-10 seconds calculation time is manageable
-    for _ in range(length):
-        rd = []
-        for die in dice:
-            rd.append(randint(1, die))
-        res.append(sum(rd))
+    length = 1000000  # Reasons for this number is simply that around 1-10 seconds calculation time is manageable
+
+    res = np.zeros(length, dtype='uint16')  # Numpy array for summarizing the results
+    for die in dice:
+        res = np.add(res, (choices(range(1, die + 1), k=length)))
     value, count = np.unique(np.asarray(res), return_counts=True)
 
     res_index, = np.where(value == result)[0]
