@@ -39,17 +39,19 @@ def ret_rolls(roll_message):
                     die = int(roll_input[i + 1:i + n + 1])
             except:
                 break
-        # Save the dice into the sympy die class
+
+        # Just in case someone rolls with zeros
+        if die == 0 or amount == 0:
+            print('zero is not manageable')
+            continue
+
+        # Save the dice into the array
         for n in range(amount):
             dice.append(die)
         # remove the found dice from the modifiers string
         modifiers = modifiers.replace(f'd{die}', '')
-
-    # # The players tend to try and break the program by writing an ungodly amount of dice
-    # if len(dice) >= 15:
-    #     print("Too many dice")
-    #     return
-
+    if len(dice) == 0:
+        return -1
     # Find every case of "+ NUMBER" or "- NUMBER"
     modifiers1 = re.findall(r'[+\-*/] \d+', modifiers)
     modifiers2 = re.findall(r'[+\-*/]\d+', modifiers)
@@ -57,7 +59,6 @@ def ret_rolls(roll_message):
     # add the numbers together if there are any
     if len(modifiers1) != 0 or len(modifiers2) != 0:
         modifiers = eval(''.join(modifiers1)+''.join(modifiers2))
-        #print(modifiers)
     else:
         modifiers = 0
 
@@ -89,8 +90,7 @@ def calc_dice(dice, roll_result):
         return -1
 
     pos_rolls = powerList(dice)
-    #print(f'{dice}\n which is {pos_rolls}')
-    if pos_rolls > 160000:
+    if pos_rolls > 50000:
         pmf, cdf = trail_and_error(dice, roll_result)
         return mean, pmf, cdf
 
@@ -132,7 +132,6 @@ def ret_mean(dice):
 
 # retrieving each possible roll
 def ret_outcomes(rolls, length,  out, last=0):
-
     for i in range(1, rolls[0] + 1):
         if length != 1:
             r = rolls[1:]
@@ -147,7 +146,7 @@ def ret_outcomes(rolls, length,  out, last=0):
 def trail_and_error(dice, result):
     from random import choices
 
-    length = 1000000  # Reasons for this number is simply that around 1-10 seconds calculation time is manageable
+    length = 1000000  # Reasons for this number is simply that around 1-10 seconds used on calculations is manageable
 
     res = np.zeros(length, dtype='uint16')  # Numpy array for summarizing the results
     for die in dice:

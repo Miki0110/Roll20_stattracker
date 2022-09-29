@@ -107,7 +107,11 @@ class Session:
                 cdfs.append(player.cdfs)
                 if best_roll > best[0]:
                     best = best_roll, rolls[b_index * 2], rolls[b_index * 2 + 1], player.name
+            # Since the lists of cdfs are inside one another I flatten the list out first
+            cdfs = [item for sublist in cdfs for item in sublist]
             avg = sum(cdfs) / len(cdfs)
+
+            # Write out the results
             m_output = f'\n**Session stats**\nAverage roll chance (1-cdf) = **{float(1 - avg)}**\nBest roll was **"{best[1]}' \
                        f' = {best[2]}"** with a **{float((1 - best[0]) * 100)}%** chance, rolled by **{best[3]}**'
             return m_output
