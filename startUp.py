@@ -1,5 +1,4 @@
 from selenium import webdriver
-import playerClass as func
 import atexit
 from pathlib import Path
 from selenium.webdriver.common.by import By
@@ -25,7 +24,7 @@ def start_driver():
 
 # Function for logging in to roll20
 def loginRoll20(driver):
-    from data import login_password, login_email, player_ids
+    from data import login_password, login_email
 
     # Open the website
     driver.get('https://roll20.net')
