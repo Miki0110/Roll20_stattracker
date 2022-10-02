@@ -196,6 +196,7 @@ def main():
     session = Session()  # Initiate a session
     while True:
         try:
+            session.find_players()  # Find players and their ID
             session.go_through_players()  # check for rolls
             session.ret_input()  # check for commands
         except Exception as e:
