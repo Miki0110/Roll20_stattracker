@@ -44,12 +44,6 @@ def loginRoll20(driver):
     # Click signin
     p_input.send_keys(Keys.ENTER)
 
-    # Find player info in DATA and return the player class in an array
-    players = []
-    for i in range(int(len(player_ids) / 2)):
-        players.append(func.Player(player_ids[int(i * 2)], player_ids[int(i * 2) + 1]))
-    return players
-
 
 # Function used to close down the Chromedriver
 def exit_handler(driver):

@@ -8,13 +8,15 @@ from selenium.webdriver.common.by import By
 class Session:
     def __init__(self):
         self.driver = startUp.start_driver()  # Driver for controlling chrome
+        startUp.loginRoll20(self.driver) # Login to roll20
+
         self.last_roll = []  # Rolls and results seen during the session
         self.read_msgs = []  # Read message ids
-        self.players = startUp.loginRoll20(self.driver)  # Players objects made from data in data.py
+        self.players = []  # Players objects made from data in data.py
+        self.player_ids = []
 
     # A function for checking stat calls
     def ret_input(self):
-        from data import player_ids
 
         # First check for messages that contain the ';;' input
         try:
@@ -56,25 +58,25 @@ class Session:
             elif command[0] == 'session' or command[0] == 's':
                 if command[1] == 'last':
                     if len(command) > 2:
-                        m_output = self.last_call(amount=int(command[2]))
+                        m_output = self._last_call(amount=int(command[2]))
                     else:
-                        m_output = self.last_call()
+                        m_output = self._last_call()
                 elif command[1] == 'stats':
-                    m_output = self.stat_call()
+                    m_output = self._stat_call()
                 else:
                     print("Command not recognised")
                     return
 
             # Player request
             elif command[0] == 'player' or command[0] == 'p':
-                player = self.players[int(player_ids.index(command[1]) / 2)]
+                player = self.players[int(self.player_ids.index(command[1]) / 2)]
                 if command[2] == 'last':
                     if len(command) > 3:
-                        m_output = self.last_call(player, amount=int(command[3]))
+                        m_output = self._last_call(player, amount=int(command[3]))
                     else:
-                        m_output = self.last_call(player)
+                        m_output = self._last_call(player)
                 elif command[2] == 'stats':
-                    m_output = self.stat_call(player)
+                    m_output = self._stat_call(player)
                 else:
                     print("Command not recognised")
                     return
@@ -88,6 +90,30 @@ class Session:
             pc.print20(self.driver, m_output)
             pc.print20(self.driver, f'**--------------------**')
 
+    # Look for players in the session
+    def find_players(self):
+        # Find the player banners
+        ps = self.driver.find_elements(By.XPATH, f'//*[@class="player ui-droppable ui-draggable"]')
+
+        for p_bar in ps:
+            # Get the player id from the banners
+            p_id = p_bar.get_attribute("id").replace("player_", "")
+
+            # Check if the person already has a class
+            if p_id in self.player_ids:
+                continue
+
+            # retrieve the name of the ID
+            p_name = p_bar.get_attribute("innerText").replace(u'\xa0\n', "").split(" ")[0]  # I only want the first name
+            print(p_name)
+
+            # Append the name and id into the session
+            self.player_ids.append(str(p_name))
+            self.player_ids.append(p_id)
+
+            # Create a player object for the person found
+            self.players.append(pc.Player(p_name, p_id))
+
     # Function for checking every player individually
     def go_through_players(self):
         for i, player in enumerate(self.players):
@@ -96,7 +122,7 @@ class Session:
                 self.last_roll.append(lr)
 
     # Function that returns the stats of a person or session
-    def stat_call(self, target=None):
+    def _stat_call(self, target=None):
         if target is None:
             best = [0,0,0,'name']
             cdfs = []
@@ -126,7 +152,7 @@ class Session:
             return m_output
 
     # Function that calculates and returns the last roll(s)
-    def last_call(self, target=None, amount=1):
+    def _last_call(self, target=None, amount=1):
         if target is None:
             rolls = []
             results = []
