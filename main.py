@@ -34,7 +34,7 @@ class Session:
         # Go through messages found
         for text in texts:
             m_id = str(text.get_attribute("data-messageid"))  # Message ID
-            text_message = str(text.get_attribute("innerText"))  # The actual message
+            text_message = str(text.get_attribute("innerText")).lower()  # The actual message
 
             # Check if this message has been read before
             if m_id in self.read_msgs:
@@ -108,7 +108,7 @@ class Session:
             print(p_name)
 
             # Append the name and id into the session
-            self.player_ids.append(str(p_name))
+            self.player_ids.append(str(p_name).lower())
             self.player_ids.append(p_id)
 
             # Create a player object for the person found

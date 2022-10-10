@@ -62,79 +62,11 @@ class Player:
         return self.rolls, avg_roll, best_roll, b_index
 
 
-# A function for checking stat calls
-def ret_input(driver, read_msgs, players, last_roll):
-    from data import player_ids
-
-    try:
-        texts = driver.find_elements(By.XPATH, '//*[@id="textchat"]//div[contains(text(),"--stats")]')
-    except:
-        read_msgs = []
-        return
-
-    if len(read_msgs) == 0:
-        for text in texts:
-            read_msgs.append(str(text.get_attribute("data-messageid")))
-
-    for text in texts:
-        m_id = str(text.get_attribute("data-messageid"))
-        text_message = str(text.get_attribute("innerText"))
-
-        # Check if this message has been read before
-        if m_id in read_msgs:
-            continue
-        # Save msg ID so it's skipped next time
-        read_msgs.append(m_id)
-
-        command = text_message.split("--stats ")[-1]
-
-        # Go through possible commands
-        if command in player_ids:
-            p_index = int(player_ids.index(command) / 2)  # Player index
-            m_output = write_stats(players[p_index])
-        elif "last" == command:
-            m_output = write_lastroll(last_roll)
-        else:
-            print("Command not recognised")
-            return
-
-        print20(driver, '‎')
-        print20(driver, f'**--------------------**')
-        print20(driver, m_output)
-        print20(driver, f'**--------------------**')
-
-
 # Function to find and write in the chat bar
 def print20(driver, message):
     text_area = driver.find_element(By.XPATH, '// *[ @ id = "textchat-input"] / textarea')
     text_area.send_keys(message)
     text_area.send_keys(Keys.ENTER)
-
-
-# Writing stats out in chat
-def write_stats(player):
-    name = player.name
-    rolls, avg_roll, best_roll, b_index = player.curr_stats()
-
-    if b_index != -1:
-        m_output = f'\n**Player {name}**\nAverage roll chance (1-cdf) = **{float(1 - avg_roll)}**\nBest roll **"{rolls[b_index * 2]}' \
-                   f' = {rolls[b_index * 2 + 1]}"** with a **{float((1 - best_roll) * 100)}%** chance'
-    else:
-        m_output = f'Player {name} has not rolled yet'
-    return m_output
-
-
-# Writing out the last roll seen
-def write_lastroll(last_roll):
-    mean, pmf, cdf = last_roll
-    if cdf != "unavailable":
-        m_output = f'\n**Last roll:**\nExpected Value = **{float(mean)}**\nWith a **{float(cdf)*100}%** of rolling that or higher,' \
-                   f' and a **{float(pmf)*100}%** chance for the exact value.'
-        return m_output
-    else:
-        m_output = f'\n**Last roll:**\nExpected Value = **{float(mean)}**\n' \
-                   f'Unfortunatly there were too many dice to calculate the chance of that exact roll'
-        return m_output
 
 
 # Retrieve dice from the already gone through dice rolls

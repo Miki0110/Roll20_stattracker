@@ -24,7 +24,7 @@ def start_driver():
 
 # Function for logging in to roll20
 def loginRoll20(driver):
-    from data import login_password, login_email
+    from login import login_password, login_email
 
     # Open the website
     driver.get('https://roll20.net')
