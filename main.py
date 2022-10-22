@@ -138,14 +138,14 @@ class Session:
             avg = sum(cdfs) / len(cdfs)
 
             # Write out the results
-            m_output = f'\n**Session stats**\nAverage roll chance (1-cdf) = **{float(1 - avg)}**\nBest roll was **"{best[1]}' \
+            m_output = f'\n**Session stats**\nRolls recorded = **{len(cdfs)}**\nAverage roll chance (1-cdf) = **{float(1 - avg)}**\nBest roll was **"{best[1]}' \
                        f' = {best[2]}"** with a **{float((1 - best[0]) * 100)}%** chance, rolled by **{best[3]}**'
             return m_output
         else:
             name = target.name
             rolls, avg_roll, best_roll, b_index = target.curr_stats()
             if b_index != -1:
-                m_output = f'\n**Player {name}**\nAverage roll chance (1-cdf) = **{float(1 - avg_roll)}**\nBest roll **"{rolls[b_index * 2]}' \
+                m_output = f'\n**Player {name}**\nRolls recorded = **{len(rolls)}**\nAverage roll chance (1-cdf) = **{float(1 - avg_roll)}**\nBest roll **"{rolls[b_index * 2]}' \
                            f' = {rolls[b_index * 2 + 1]}"** with a **{float((1 - best_roll) * 100)}%** chance'
             else:
                 m_output = f'Player {name} has not rolled yet'
