@@ -179,7 +179,6 @@ class Session:
             return m_output
 
     # Function that calculates and returns the last roll(s)
-    # TODO FIX WORST BEST ROLLS
     def _last_call(self, target=None, amount=1):
         if target is None:
             rolls = []
@@ -194,8 +193,9 @@ class Session:
                 modifiers = modifiers+modifier
             output = dc.calc_dice(rolls, sum(results))
             if output != -1:
+
                 m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results)+modifiers}**\n' \
-                           f'Expected Value = **{float(output[0]+modifiers)}**\nWith a **{(1-float(output[2]))*100}%** of rolling that or higher,' \
+                           f'Expected Value = **{float(output[0]+modifiers)}**\nWith a **{(float(output[3]))*100}%** of rolling that or higher,' \
                            f' and a **{float(output[1])*100}%** chance for the exact value.'
             else:
                 m_output = f'Too many dice to calculate'
@@ -213,7 +213,7 @@ class Session:
             output = dc.calc_dice(rolls, sum(results))
             if output != -1:
                 m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results) + modifiers}**\n' \
-                           f'Expected Value = **{float(output[0] + modifiers)}**\nWith a **{(1 - float(output[2])) * 100}%** of rolling that or higher,' \
+                           f'Expected Value = **{float(output[0] + modifiers)}**\nWith a **{(float(output[3])) * 100}%** of rolling that or higher,' \
                            f' and a **{float(output[1]) * 100}%** chance for the exact value.'
             else:
                 m_output = f'Too many dice to calculate'
