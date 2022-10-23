@@ -10,7 +10,8 @@ class Player:
         self.id = id
         self.read_msg = []
         self.rolls = []
-        self.cdfs = []
+        self.cdf = []
+        self.inv_cdf = []
 
     def check_roll(self, driver):
         try:
@@ -42,9 +43,12 @@ class Player:
             print("calculating...")
             out = dc.ret_rolls(roll_message)  # Retrieve the statistical values
             if out != -1:
-                roll_inp, result, mean, pmf, cdf = out
-                print(f'Player {self.name} rolls\nMean = {float(mean)}\npmf = {float(pmf)}\ncdf = {float(1 - cdf)}')
-                self.cdfs.append(cdf)
+                roll_inp, result, mean, pmf, cdf, inv_cdf = out
+                print(f'Player {self.name} rolls\nMean = {float(mean)}\npmf = {float(pmf)}\n cdf = {float(cdf)}\n inv_cdf = {float(inv_cdf)}')
+
+                self.cdf.append(cdf)
+                self.inv_cdf.append(inv_cdf)
+
                 self.rolls.append(roll_inp)
                 self.rolls.append(result)
                 return roll_inp, result, self.name
@@ -54,12 +58,18 @@ class Player:
 
     # Retrieve data from the object
     def curr_stats(self):  # Returns (rolls, average roll, best roll, best roll index)
-        if len(self.cdfs) == 0:
-            return ['no rolls', 'no rolls', 'no rolls', -1]
-        avg_roll = sum(self.cdfs) / len(self.cdfs)
-        best_roll = max(self.cdfs)
-        b_index = self.cdfs.index(best_roll)
-        return self.rolls, avg_roll, best_roll, b_index
+        if len(self.inv_cdf) == 0:
+            return ['no rolls', -1, -1]
+        avg_broll = sum(self.inv_cdf) / len(self.inv_cdf)
+        avg_wroll = sum(self.cdf) / len(self.cdf)
+        avg = (avg_broll+avg_wroll)/2
+
+        worst_roll = min(self.cdf)
+        best_roll = min(self.inv_cdf)
+        w_index = self.cdf.index(worst_roll)
+        b_index = self.inv_cdf.index(best_roll)
+
+        return self.rolls, avg, [worst_roll, w_index], [best_roll, b_index]
 
 
 # Function to find and write in the chat bar

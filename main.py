@@ -124,34 +124,62 @@ class Session:
     # Function that returns the stats of a person or session
     def _stat_call(self, target=None):
         if target is None:
-            best = [0,0,0,'name']
+            best = [0, 0, 0, 'name']
+            worst = [0, 0, 0, 'name']
             cdfs = []
+            inv_cdfs = []
+
             for player in self.players:
-                rolls, _, best_roll, b_index = player.curr_stats()
-                if b_index == -1: #  incase the player has not rolled yet
+                rolls, avg, w, b = player.curr_stats()
+                if b == -1: #  incase the player has not rolled yet
                     continue
-                cdfs.append(player.cdfs)
+                cdfs.append(player.cdf)
+                inv_cdfs.append(player.inv_cdf)
+
+                # The worst seen rolls
+                worst_roll, w_index = w
+                if worst_roll > worst[0]:
+                    worst = worst_roll, rolls[w_index * 2], rolls[w_index * 2 + 1], player.name
+
+                # The best seen rolls
+                best_roll, b_index = b
                 if best_roll > best[0]:
                     best = best_roll, rolls[b_index * 2], rolls[b_index * 2 + 1], player.name
+
             # Since the lists of cdfs are inside one another I flatten the list out first
             cdfs = [item for sublist in cdfs for item in sublist]
-            avg = sum(cdfs) / len(cdfs)
+            inv_cdfs = [item for sublist in inv_cdfs for item in sublist]
+
+            avg_b = sum(inv_cdfs) / len(inv_cdfs)
 
             # Write out the results
-            m_output = f'\n**Session stats**\nRolls recorded = **{len(cdfs)}**\nAverage roll chance (1-cdf) = **{float(1 - avg)}**\nBest roll was **"{best[1]}' \
-                       f' = {best[2]}"** with a **{float((1 - best[0]) * 100)}%** chance, rolled by **{best[3]}**'
+            m_output = f'\n**Session stats**\n' \
+                       f'Rolls recorded = **{len(cdfs)}**\n' \
+                       f'Average chance to roll that or higher = **{float(avg_b)}**\n'\
+                       f'Best roll was **"{best[1]} = {best[2]}"** with a **{float(best[0] * 100)}%** chance, rolled by **{best[3]}**\n\n' \
+                       f'Worst roll was **"{worst[1]} = {worst[2]}"** with a **{float(worst[0] * 100)}%** chance, rolled by **{worst[3]}**'
             return m_output
         else:
             name = target.name
-            rolls, avg_roll, best_roll, b_index = target.curr_stats()
-            if b_index != -1:
-                m_output = f'\n**Player {name}**\nRolls recorded = **{len(rolls)}**\nAverage roll chance (1-cdf) = **{float(1 - avg_roll)}**\nBest roll **"{rolls[b_index * 2]}' \
-                           f' = {rolls[b_index * 2 + 1]}"** with a **{float((1 - best_roll) * 100)}%** chance'
+            rolls, avg, w, b = target.curr_stats()
+
+            if b != -1:
+                # The worst seen rolls
+                worst_roll, w_index = w
+                # The best seen rolls
+                best_roll, b_index = b
+
+                m_output = f'\n**Player {name}**\n' \
+                           f'Rolls recorded = **{len(int(rolls/2))}**\n' \
+                           f'Average chance to roll that or higher = **{float(avg)}**\n' \
+                           f'Best roll **"{rolls[b_index * 2]} = {rolls[b_index * 2 + 1]}"** with a **{float(best_roll * 100)}%** chance\n\n' \
+                           f'Worst roll **"{rolls[w_index * 2]} = {rolls[w_index * 2 + 1]}"** with a **{float(worst_roll * 100)}%** chance'
             else:
                 m_output = f'Player {name} has not rolled yet'
             return m_output
 
     # Function that calculates and returns the last roll(s)
+    # TODO FIX WORST BEST ROLLS
     def _last_call(self, target=None, amount=1):
         if target is None:
             rolls = []
@@ -195,13 +223,13 @@ class Session:
 def main():
     session = Session()  # Initiate a session
     while True:
-        try:
+        #try:
             session.find_players()  # Find players and their ID
             session.go_through_players()  # check for rolls
             session.ret_input()  # check for commands
-        except Exception as e:
+        #except Exception as e:
             # Sometimes the selenium makes errors, print them out if that's the case
-            print(e)
+        #    print(e)
 
 
 if __name__ == "__main__":

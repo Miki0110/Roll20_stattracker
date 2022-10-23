@@ -76,7 +76,7 @@ def ret_rolls(roll_message):
     if calcs == -1:
         return -1
     else:
-        return roll_input, roll_result + modifiers, calcs[0]+modifiers, calcs[1], calcs[2]
+        return roll_input, roll_result + modifiers, calcs[0]+modifiers, calcs[1], calcs[2], calcs[3]
 
 
 def calc_dice(dice, roll_result):
@@ -91,16 +91,17 @@ def calc_dice(dice, roll_result):
 
     pos_rolls = powerList(dice)
     if pos_rolls > 50000:
-        pmf, cdf = trail_and_error(dice, roll_result)
-        return mean, pmf, cdf
+        pmf, cdf, inv_cdf = trail_and_error(dice, roll_result)
+        return mean, pmf, cdf, inv_cdf
 
     # Using the density and keys function I can extract all possible outcomes
     possible_vals, pmf = ret_pmf(dice)
 
     # Calculate the cdf by adding up all the pmfs
     res_index = np.where(possible_vals == roll_result)[0][0]
-    cdf = sum(pmf[0:res_index])
-    return mean, pmf[res_index], cdf
+    cdf = sum(pmf[0:res_index+1])
+    inv_cdf = 1-sum(pmf[0:res_index])
+    return mean, pmf[res_index], cdf, inv_cdf
 
 
 # Function used to figure out how hard it is to calculate
@@ -156,5 +157,6 @@ def trail_and_error(dice, result):
     res_index, = np.where(value == result)[0]
 
     prob = count / length
-    cdf = sum(prob[0:res_index])
-    return prob[res_index], cdf
+    cdf = sum(prob[0:res_index+1])
+    inv_cdf = 1-sum(prob[0:res_index])
+    return prob[res_index], cdf, inv_cdf

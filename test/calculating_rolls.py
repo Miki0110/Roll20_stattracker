@@ -1,7 +1,7 @@
 import numpy as np
 import dice_calculations as dc
 from fractions import Fraction
-dice = [20, 20, 20]
+dice = [20]
 
 means = dc.ret_mean(dice)
 mean = sum(means)
@@ -10,8 +10,8 @@ mean = sum(means)
 possible_vals, pmf = dc.ret_pmf(dice)
 
 # Calculate the cdf by adding up all the pmfs
-res_index = np.where(possible_vals == 40)[0][0]
-cdf = sum(pmf[0:res_index])
+res_index = np.where(possible_vals == 1)[0][0]
+cdf = sum(pmf[0:res_index+1])
 print(cdf)
 print(mean)
 
