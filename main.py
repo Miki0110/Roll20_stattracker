@@ -170,7 +170,7 @@ class Session:
                 best_roll, b_index = b
 
                 m_output = f'\n**Player {name}**\n' \
-                           f'Rolls recorded = **{len(int(rolls/2))}**\n' \
+                           f'Rolls recorded = **{int(len(rolls)/2)}**\n' \
                            f'Average chance to roll that or higher = **{float(avg)}**\n' \
                            f'Best roll **"{rolls[b_index * 2]} = {rolls[b_index * 2 + 1]}"** with a **{float(best_roll * 100)}%** chance\n\n' \
                            f'Worst roll **"{rolls[w_index * 2]} = {rolls[w_index * 2 + 1]}"** with a **{float(worst_roll * 100)}%** chance'
@@ -223,13 +223,13 @@ class Session:
 def main():
     session = Session()  # Initiate a session
     while True:
-        #try:
+        try:
             session.find_players()  # Find players and their ID
             session.go_through_players()  # check for rolls
             session.ret_input()  # check for commands
-        #except Exception as e:
+        except Exception as e:
             # Sometimes the selenium makes errors, print them out if that's the case
-        #    print(e)
+            print(e)
 
 
 if __name__ == "__main__":

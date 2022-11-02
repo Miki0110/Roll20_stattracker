@@ -62,7 +62,7 @@ class Player:
             return ['no rolls', -1, -1]
         avg_broll = sum(self.inv_cdf) / len(self.inv_cdf)
         avg_wroll = sum(self.cdf) / len(self.cdf)
-        avg = (avg_broll+avg_wroll)/2
+        avg = (avg_broll+(1-avg_wroll))/2
 
         worst_roll = min(self.cdf)
         best_roll = min(self.inv_cdf)
