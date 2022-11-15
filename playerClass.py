@@ -59,17 +59,17 @@ class Player:
     # Retrieve data from the object
     def curr_stats(self):  # Returns (rolls, average roll, best roll, best roll index)
         if len(self.inv_cdf) == 0:
-            return ['no rolls', -1, -1]
+            return ['no rolls', -1, -1, -1]
         avg_broll = sum(self.inv_cdf) / len(self.inv_cdf)
-        avg_wroll = sum(self.cdf) / len(self.cdf)
-        avg = (avg_broll+(1-avg_wroll))/2
+        #avg_wroll = sum(self.cdf) / len(self.cdf)
+        #avg = (avg_broll+(1-avg_wroll))/2
 
         worst_roll = min(self.cdf)
         best_roll = min(self.inv_cdf)
         w_index = self.cdf.index(worst_roll)
         b_index = self.inv_cdf.index(best_roll)
 
-        return self.rolls, avg, [worst_roll, w_index], [best_roll, b_index]
+        return self.rolls, avg_broll, [worst_roll, w_index], [best_roll, b_index]
 
 
 # Function to find and write in the chat bar
