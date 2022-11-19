@@ -124,26 +124,28 @@ class Session:
     # Function that returns the stats of a person or session
     def _stat_call(self, target=None):
         if target is None:
-            best = [0, 0, 0, 'name']
-            worst = [0, 0, 0, 'name']
+            best = [10, 10, 10, 'name']
+            worst = [10, 10, 10, 'name']
             cdfs = []
             inv_cdfs = []
 
             for player in self.players:
                 rolls, avg, w, b = player.curr_stats()
                 if b == -1: #  incase the player has not rolled yet
+                    print('here')
                     continue
                 cdfs.append(player.cdf)
                 inv_cdfs.append(player.inv_cdf)
 
                 # The worst seen rolls
                 worst_roll, w_index = w
-                if worst_roll > worst[0]:
+                if worst_roll < worst[0]:
                     worst = worst_roll, rolls[w_index * 2], rolls[w_index * 2 + 1], player.name
+
 
                 # The best seen rolls
                 best_roll, b_index = b
-                if best_roll > best[0]:
+                if best_roll < best[0]:
                     best = best_roll, rolls[b_index * 2], rolls[b_index * 2 + 1], player.name
 
             # Since the lists of cdfs are inside one another I flatten the list out first
