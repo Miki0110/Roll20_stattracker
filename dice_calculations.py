@@ -15,41 +15,32 @@ def ret_rolls(roll_message):
 
     # Find the dice and the amount
     dice = []
-    # Finding the index for each time the letter d is used
-    d_place = find_indexes(roll_input, 'd')
+    # Finding the rolls through the setup [amount]d[die][options]
+    rolls = re.finditer(r'(\d*)?d(\d+)(\w*)', roll_input)
+
     modifiers = roll_input  # Used for finding modifiers
 
     # Go through every d to figure out what kind of roll it is
-    for i in d_place:
-        # If it's not a die roll, continue
-        if not roll_input[i + 1].isdigit():
-            continue
-        # Find the amount of dice
-        amount = 1
-        for n in range(1, 4):  # check to see if there's more than one die
-            try:
-                if roll_input[i - n].isdigit():
-                    amount = int(roll_input[i - n:i])
-            except:
-                break
-        # Find the die type
-        for n in range(1, 4):
-            try:
-                if roll_input[i + n].isdigit():
-                    die = int(roll_input[i + 1:i + n + 1])
-            except:
-                break
+    for roll in rolls:
+        # Collect the data retrieved
+        full_roll = roll.group(0)
+        amount = int(roll.group(1)) if roll.group(1) != '' else 1
+        die = int(roll.group(2))
+        options = roll.group(3)
 
         # Just in case someone rolls with zeros
         if die == 0 or amount == 0:
             print('zero is not manageable')
             continue
 
+        if options != '':
+            amount = 1
+
         # Save the dice into the array
         for n in range(amount):
             dice.append(die)
         # remove the found dice from the modifiers string
-        modifiers = modifiers.replace(f'd{die}', '')
+        modifiers = modifiers.replace(f'{full_roll}', '')
     if len(dice) == 0:
         return -1
     # Find every case of "+ NUMBER" or "- NUMBER"
@@ -67,7 +58,7 @@ def ret_rolls(roll_message):
 
     # Rewrite the input so that it can be cleaned and reprinted
     roll_input = ''
-    d, c = np.unique(np.asarray(dice),return_counts=True)
+    d, c = np.unique(np.asarray(dice), return_counts=True)
     for i in range(len(d)):
         roll_input = roll_input+f'{c[i]}d{d[i]}+'
     roll_input = roll_input+f'{modifiers}'

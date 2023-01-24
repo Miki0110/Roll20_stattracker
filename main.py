@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 class Session:
     def __init__(self):
         self.driver = startUp.start_driver()  # Driver for controlling chrome
-        startUp.loginRoll20(self.driver) # Login to roll20
+        startUp.loginRoll20(self.driver)  # Login to roll20
 
         self.last_roll = []  # Rolls and results seen during the session
         self.read_msgs = []  # Read message ids
@@ -50,7 +50,7 @@ class Session:
             if command[0] == 'help'or command[0] == 'h':
                 m_output = '**Current requests**\n```;session {command}``*check rolls for the entire session*\n' \
                            '```;player {Player name} {command}``*check rolls of a single player*\n' \
-                           '**Current commands**\n```;{request} last {number of rolls}``' \
+                           '**Current commands**\n```;[request] last {number of rolls}``' \
                            ' *Returns the chance for a combined number of rolls*\n' \
                            '```;[request] stats`` *Returns the average and best rolls for the session*'
 
@@ -152,12 +152,12 @@ class Session:
             cdfs = [item for sublist in cdfs for item in sublist]
             inv_cdfs = [item for sublist in inv_cdfs for item in sublist]
 
-            avg_b = sum(inv_cdfs) / len(inv_cdfs)
+            avg_b = sum(inv_cdfs) / len(inv_cdfs) * 100
 
             # Write out the results
             m_output = f'\n**Session stats**\n' \
                        f'Rolls recorded = **{len(cdfs)}**\n' \
-                       f'Average chance to roll that or higher = **{float(avg_b)}**\n'\
+                       f'Average chance to roll that or higher = **{float(avg_b)}%**\n'\
                        f'Best roll was **"{best[1]} = {best[2]}"** with a **{float(best[0] * 100)}%** chance, rolled by **{best[3]}**\n\n' \
                        f'Worst roll was **"{worst[1]} = {worst[2]}"** with a **{float(worst[0] * 100)}%** chance, rolled by **{worst[3]}**'
             return m_output
@@ -173,7 +173,7 @@ class Session:
 
                 m_output = f'\n**Player {name}**\n' \
                            f'Rolls recorded = **{int(len(rolls)/2)}**\n' \
-                           f'Average chance to roll that or higher = **{float(avg)}**\n' \
+                           f'Average chance to roll that or higher = **{float(avg*100)}%**\n' \
                            f'Best roll **"{rolls[b_index * 2]} = {rolls[b_index * 2 + 1]}"** with a **{float(best_roll * 100)}%** chance\n\n' \
                            f'Worst roll **"{rolls[w_index * 2]} = {rolls[w_index * 2 + 1]}"** with a **{float(worst_roll * 100)}%** chance'
             else:
