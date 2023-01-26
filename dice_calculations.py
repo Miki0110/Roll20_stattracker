@@ -12,11 +12,12 @@ def ret_rolls(roll_message):
     # Using the structure of the string to extract the rolled dice and result of rolling
     roll_input = roll_message.split("rolling ")[-1].split("(")[0]
     roll_result = int(float(roll_message.split("=")[-1].split(" ")[0]))
+    print(roll_message)
 
     # Find the dice and the amount
     dice = []
     # Finding the rolls through the setup [amount]d[die][options]
-    rolls = re.finditer(r'(\d*)?d(\d+)(\w*)', roll_input)
+    rolls = re.finditer(r'(-)?(\d*)?d(\d+)(\w*)', roll_input)
 
     modifiers = roll_input  # Used for finding modifiers
 
@@ -24,16 +25,25 @@ def ret_rolls(roll_message):
     for roll in rolls:
         # Collect the data retrieved
         full_roll = roll.group(0)
-        amount = int(roll.group(1)) if roll.group(1) != '' else 1
-        die = int(roll.group(2))
-        options = roll.group(3)
+        amount = int(roll.group(2)) if roll.group(2) != '' else 1
+        if roll.group(1) is None:
+            die = int(roll.group(3))
+        else:
+            die = int(roll.group(1)+roll.group(3))
+        option = roll.group(4)
 
         # Just in case someone rolls with zeros
         if die == 0 or amount == 0:
             print('zero is not manageable')
             continue
 
-        if options != '':
+        if option != '':
+            # Since we cannot look directly at the output for the result of adv dice
+            in_between = roll_message.replace(full_roll, "").split("=")[0]
+            roll_results = re.findall(r'\d+', in_between)
+            result = max(map(int, roll_results))
+            mean, pmf, cdf, inv_cdf = calc_adv_dice(amount, die, result, option)
+            # Until I figure out how to save the statistics of an advantage roll this stays
             amount = 1
 
         # Save the dice into the array
@@ -41,6 +51,7 @@ def ret_rolls(roll_message):
             dice.append(die)
         # remove the found dice from the modifiers string
         modifiers = modifiers.replace(f'{full_roll}', '')
+
     if len(dice) == 0:
         return -1
     # Find every case of "+ NUMBER" or "- NUMBER"
@@ -63,6 +74,7 @@ def ret_rolls(roll_message):
         roll_input = roll_input+f'{c[i]}d{d[i]}+'
     roll_input = roll_input+f'{modifiers}'
 
+    print(dice)
     calcs = calc_dice(dice, roll_result)
     if calcs == -1:
         return -1
@@ -95,6 +107,27 @@ def calc_dice(dice, roll_result):
     return mean, pmf[res_index], cdf, inv_cdf
 
 
+def calc_adv_dice(amount_of_dice, die, roll_result, option):
+    # Check if the cdf is manageable
+    if amount_of_dice > 50:
+        print('too many dice')
+        return -1
+
+    # Using the density and keys function I can extract all possible outcomes
+    if option == "kh1" or option == 'dl1' or option == "kh":
+        possible_vals, pmf = ret_pmf_HL_die(die, amount_of_dice, True)
+    else:
+        possible_vals, pmf = ret_pmf_HL_die(die, amount_of_dice, False)
+    # Expected value
+    mean = np.dot(possible_vals, pmf)
+
+    # Find the possible values and the calculate the CDF and inv-CDF
+    res_index = np.where(possible_vals == roll_result)[0][0]
+    cdf = sum(pmf[0:res_index + 1])
+    inv_cdf = 1 - sum(pmf[0:res_index])
+    return mean, pmf[res_index], cdf, inv_cdf
+
+
 # Function used to figure out how hard it is to calculate
 def powerList(myList):
     try:
@@ -109,8 +142,10 @@ def powerList(myList):
 
 # Retrieve the pmf
 def ret_pmf(dice):
-    outcomes = ret_outcomes(dice, len(dice), [])
-    chance = Fraction(np.prod(1 / np.asarray(dice))).limit_denominator(1000000)
+    print(dice)
+    outcomes = ret_outcomes(dice)
+    dice = np.abs(dice)
+    chance = Fraction(np.prod(1 / dice)).limit_denominator(1000000)
     return outcomes[0], outcomes[1]*chance  # (possible rolls, pmf)
 
 
@@ -118,18 +153,20 @@ def ret_pmf(dice):
 def ret_mean(dice):
     a = []
     for die in dice:
-        a.append(np.mean(range(1, die+1)))
+        if die > 0:
+            a.append(np.mean(range(1, die+1)))
+        else:
+            a.append(np.mean(range(die, 0)))
     return a
 
 
 # retrieving each possible roll
-def ret_outcomes(rolls, length,  out, last=0):
-    for i in range(1, rolls[0] + 1):
-        if length != 1:
-            r = rolls[1:]
-            ret_outcomes(r, length - 1, out, last=i + last)
-        else:
-            out.append(last + i)
+def ret_outcomes(rolls):
+    import itertools
+
+    dice = [range(1,roll+1) if roll > 0 else range(roll, 0) for roll in rolls]
+    out = [sum(x) for x in itertools.product(*dice)]
+
     pos_outcomes = np.unique(np.asarray(out), return_counts=True)
     return pos_outcomes
 
@@ -151,3 +188,15 @@ def trail_and_error(dice, result):
     cdf = sum(prob[0:res_index+1])
     inv_cdf = 1-sum(prob[0:res_index])
     return prob[res_index], cdf, inv_cdf
+
+
+# Function for retrieving the PMF of a keep highest or keep lowest roll
+def ret_pmf_HL_die(num_sides, num_dice, keep_highest):
+    outcomes = np.random.randint(1, num_sides+1, size=(num_dice, 1000000))
+    if keep_highest:
+        max_outcome = np.amax(outcomes, axis=0)
+    else:
+        max_outcome = np.amin(outcomes, axis=0)
+    unique, counts = np.unique(max_outcome, return_counts=True)
+    pmf = counts/len(max_outcome)
+    return unique, pmf

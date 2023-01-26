@@ -222,7 +222,8 @@ class Session:
         return m_output
 
 
-def main():
+# MAIN LOOP
+if __name__ == "__main__":
     session = Session()  # Initiate a session
     while True:
         try:
@@ -232,7 +233,3 @@ def main():
         except Exception as e:
             # Sometimes the selenium makes errors, print them out if that's the case
             print(e)
-
-
-if __name__ == "__main__":
-    main()
