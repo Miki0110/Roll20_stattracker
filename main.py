@@ -21,7 +21,8 @@ class Session:
         # First check for messages that contain the ';;' input
         try:
             texts = self.driver.find_elements(By.XPATH, '//*[@id="textchat"]//div[contains(text(),";;")]')
-        except:
+        except Exception as es:
+            a = es
             # This is just incase you go into a different roll 20 tab
             self.read_msgs = []
             return
@@ -47,7 +48,7 @@ class Session:
 
             # Check for what kind of request it is
             # Help request
-            if command[0] == 'help'or command[0] == 'h':
+            if command[0] == 'help' or command[0] == 'h':
                 m_output = '**Current requests**\n```;session {command}``*check rolls for the entire session*\n' \
                            '```;player {Player name} {command}``*check rolls of a single player*\n' \
                            '**Current commands**\n```;[request] last {number of rolls}``' \
@@ -131,7 +132,7 @@ class Session:
 
             for player in self.players:
                 rolls, avg, w, b = player.curr_stats()
-                if b == -1: #  incase the player has not rolled yet
+                if b == -1:  # incase the player has not rolled yet
                     print('here')
                     continue
                 cdfs.append(player.cdf)
@@ -141,7 +142,6 @@ class Session:
                 worst_roll, w_index = w
                 if worst_roll < worst[0]:
                     worst = worst_roll, rolls[w_index * 2], rolls[w_index * 2 + 1], player.name
-
 
                 # The best seen rolls
                 best_roll, b_index = b
@@ -158,8 +158,10 @@ class Session:
             m_output = f'\n**Session stats**\n' \
                        f'Rolls recorded = **{len(cdfs)}**\n' \
                        f'Average chance to roll that or higher = **{float(avg_b)}%**\n'\
-                       f'Best roll was **"{best[1]} = {best[2]}"** with a **{float(best[0] * 100)}%** chance, rolled by **{best[3]}**\n\n' \
-                       f'Worst roll was **"{worst[1]} = {worst[2]}"** with a **{float(worst[0] * 100)}%** chance, rolled by **{worst[3]}**'
+                       f'Best roll was **"{best[1]} = {best[2]}"** '\
+                       f'with a **{float(best[0] * 100)}%** chance, rolled by **{best[3]}**\n\n' \
+                       f'Worst roll was **"{worst[1]} = {worst[2]}"** with a **{float(worst[0] * 100)}%** '\
+                       f'chance, rolled by **{worst[3]}**'
             return m_output
         else:
             name = target.name
@@ -174,8 +176,10 @@ class Session:
                 m_output = f'\n**Player {name}**\n' \
                            f'Rolls recorded = **{int(len(rolls)/2)}**\n' \
                            f'Average chance to roll that or higher = **{float(avg*100)}%**\n' \
-                           f'Best roll **"{rolls[b_index * 2]} = {rolls[b_index * 2 + 1]}"** with a **{float(best_roll * 100)}%** chance\n\n' \
-                           f'Worst roll **"{rolls[w_index * 2]} = {rolls[w_index * 2 + 1]}"** with a **{float(worst_roll * 100)}%** chance'
+                           f'Best roll **"{rolls[b_index * 2]} = {rolls[b_index * 2 + 1]}"** with a '\
+                           f'**{float(best_roll * 100)}%** chance\n\n' \
+                           f'Worst roll **"{rolls[w_index * 2]} = {rolls[w_index * 2 + 1]}"** with a '\
+                           f'**{float(worst_roll * 100)}%** chance'
             else:
                 m_output = f'Player {name} has not rolled yet'
             return m_output
@@ -197,7 +201,8 @@ class Session:
             if output != -1:
 
                 m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results)+modifiers}**\n' \
-                           f'Expected Value = **{float(output[0]+modifiers)}**\nWith a **{(float(output[3]))*100}%** of rolling that or higher,' \
+                           f'Expected Value = **{float(output[0]+modifiers)}**\nWith a '\
+                           f'**{(float(output[3]))*100}%** of rolling that or higher,' \
                            f' and a **{float(output[1])*100}%** chance for the exact value.'
             else:
                 m_output = f'Too many dice to calculate'
@@ -215,7 +220,8 @@ class Session:
             output = dc.calc_dice(rolls, sum(results))
             if output != -1:
                 m_output = f'\n**Last {amount} roll(s):**\nResulted in a total of = **{sum(results) + modifiers}**\n' \
-                           f'Expected Value = **{float(output[0] + modifiers)}**\nWith a **{(float(output[3])) * 100}%** of rolling that or higher,' \
+                           f'Expected Value = **{float(output[0] + modifiers)}**\nWith a '\
+                           f'**{(float(output[3])) * 100}%** of rolling that or higher,' \
                            f' and a **{float(output[1]) * 100}%** chance for the exact value.'
             else:
                 m_output = f'Too many dice to calculate'

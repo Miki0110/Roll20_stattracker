@@ -2,9 +2,50 @@ import numpy as np
 import dice_calculations as dc
 from scipy.stats import binom
 from fractions import Fraction
+import itertools
 
-dice = [20,-4]
-result = 13
+import itertools
+import fractions
+
+
+
+
+# Define the number of sides on each die
+num_sides_dice1 = 20
+num_sides_dice2 = 20
+num_sides_dice3 = 6
+print(dc.calc_adv_dice([20,20], [8], 20, True))
+# Generate a list of all possible outcomes of three dice rolls
+outcomes = [outcome for outcome in itertools.product(range(1, num_sides_dice1 + 1), range(1, num_sides_dice2 + 1), range(1, num_sides_dice3 + 1))]
+
+# Calculate the expected value
+expected_value = sum([max(outcome[0],outcome[1]) + outcome[2] for outcome in outcomes]) / len(outcomes)
+print("Expected value:", expected_value)
+
+# Calculate the PMF
+pmf = {}
+for outcome in outcomes:
+    sum_highest_two = max(outcome[0],outcome[1]) + outcome[2]
+    if sum_highest_two not in pmf:
+        pmf[sum_highest_two] = 1 / len(outcomes)
+    else:
+        pmf[sum_highest_two] += 1 / len(outcomes)
+print("PMF:", pmf)
+
+# Calculate the CDF
+cdf = {}
+cumulative_prob = 0
+for outcome in sorted(pmf.keys()):
+    cumulative_prob += pmf[outcome]
+    cdf[outcome] = cumulative_prob
+print("CDF:", cdf)
+
+outcome = dc.calc_adv_dice(2, 20, 20, 'kh')
+print(outcome[0]+3.5)
+
+exit()
+dice = [20,20]
+result = -3
 
 res = dc.calc_dice(dice, result)
 print(res)
@@ -23,27 +64,7 @@ n_keep = 1
 sides = 20
 
 
-def calc_adv_dice(amount_of_dice, die, roll_result, option):
-    # Check if the cdf is manageable
-    if amount_of_dice > 50:
-        print('too many dice')
-        return -1
 
-    # Using the density and keys function I can extract all possible outcomes
-    if option == "kh1" or option == 'dl1':
-        possible_vals, pmf = dc.ret_pmf_HL_die(die, amount_of_dice, True)
-    else:
-        possible_vals, pmf = dc.ret_pmf_HL_die(die, amount_of_dice, False)
-
-    mean = np.dot(possible_vals, pmf)
-
-    # Find the possible values and the calculate the CDF and inv-CDF
-    res_index = np.where(possible_vals == roll_result)[0][0]
-    cdf = sum(pmf[0:res_index + 1])
-    inv_cdf = 1 - sum(pmf[0:res_index])
-    return mean, pmf[res_index], cdf, inv_cdf
-
-outcome = calc_adv_dice([6,6,6], 3, 'kl1')
 print(outcome)
 
 
