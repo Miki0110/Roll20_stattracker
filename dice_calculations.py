@@ -46,11 +46,29 @@ def ret_rolls(roll_message):
         else:
             adv_dice.append(amount)
             adv_dice.append(die)
-            option_match = re.match(r'([a-z]+)([0-9]+)', option)
-            if option_match.group(1) == "k" or option_match.group(1) == "kh" or option_match.group(1) == "dl":
+
+            option_match = re.match(r'([a-z]+)([0-9]+)', option)  # match[full_option, k/d, amount]
+            # Many types of options mean roll with advantage, so we go through them real quick
+            if option_match.group(1) == "k" or option_match.group(1) == "kh" or option_match.group(1) == "dl" or option_match.group(1) == "d":
+                if option_match.group(2) == 0 or option_match.group(2) is None:
+                    # Since of people mess up the "kh" there will be no roll
+                    adv_dice = []
+                    dice = []
+                    break
                 adv_dice.append(True)
-            else:
+            elif option_match.group(1) == "kl" or option_match.group(1) == "dh":
+                if option_match.group(2) == 0 or option_match.group(2) is None:
+                    # Since of people mess up the "kh" there will be no roll
+                    adv_dice = []
+                    dice = []
+                    break
                 adv_dice.append(False)
+            else:
+                # For non specified options
+                adv_dice = []
+                dice = []
+                print("not a valid roll")
+                break
 
         # remove the found dice from the modifiers string
         modifiers = modifiers.replace(f'{full_roll}', '')
