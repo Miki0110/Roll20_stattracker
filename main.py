@@ -2,6 +2,10 @@ import startUp
 import playerClass as pc
 import dice_calculations as dc
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchWindowException, WebDriverException
+import sys
+import csv
+import time
 
 
 # Defining a class for setting up the session
@@ -123,7 +127,7 @@ class Session:
                 self.last_roll.append(lr)
 
     # Function that returns the stats of a person or session
-    def _stat_call(self, target=None):
+    def _stat_call(self, target=None, return_string=True):
         if target is None:
             best = [10, 10, 10, 'name']
             worst = [10, 10, 10, 'name']
@@ -162,7 +166,11 @@ class Session:
                        f'with a **{float(best[0] * 100)}%** chance, rolled by **{best[3]}**\n\n' \
                        f'Worst roll was **"{worst[1]} = {worst[2]}"** with a **{float(worst[0] * 100)}%** '\
                        f'chance, rolled by **{worst[3]}**'
-            return m_output
+            # If the function is used to just call stats
+            if not return_string:
+                return len(cdfs), float(avg_b), best, worst
+            else:
+                return m_output
         else:
             name = target.name
             rolls, avg, w, b = target.curr_stats()
@@ -227,6 +235,30 @@ class Session:
                 m_output = f'Too many dice to calculate'
         return m_output
 
+    # Function for logging the stats of the session
+    def log_session(self):
+        # Get the date for the filename
+        timestamp = time.strftime("%d-%m-%H-%M-%Y")
+        filename = "Session_{}.csv".format(timestamp)
+        with open(f'logs/{filename}', "a", newline="") as csv_file:
+            writer = csv.writer(csv_file)
+            # Session sum-up
+            header = ["[Amount of rolls", "Average roll chance", "Best roll", "Worst roll]"]
+            output = session._stat_call(return_string=False)
+            # Write out the session
+            writer.writerow(header)
+            writer.writerow(output)
+
+            # Individual player log
+            header = ["[Player", "Rolls", "CDF", "Inv CDF]"]
+            writer.writerow(header)
+            for player in self.players:
+                name = player.name
+                rolls = player.rolls
+                cdf = player.cdf
+                inv_cdf = player.inv_cdf
+                writer.writerow([name, rolls, cdf, inv_cdf])
+
 
 # MAIN LOOP
 if __name__ == "__main__":
@@ -236,6 +268,21 @@ if __name__ == "__main__":
             session.find_players()  # Find players and their ID
             session.go_through_players()  # check for rolls
             session.ret_input()  # check for commands
-        except Exception as e:
-            # Sometimes the selenium makes errors, print them out if that's the case
-            print(e)
+
+        # Go through exceptions, since and act accordingly
+        except NoSuchWindowException as e:  # In case the browser window is closed
+            print("The browser has been closed\nProceeding to save logs...")
+            # Check if the browser has been closed
+            try:
+                session.driver.close()
+            except Exception as e:
+                pass
+            # Save the logs
+            session.log_session()
+            # Exit the program
+            sys.exit()
+
+        except WebDriverException as e:  # Sometimes Selenium cannot find a specified object (This is generally ignored)
+            print("An error occurred while interacting with the browser")
+        except Exception as e:  # In case an exception occurs due to bugs or errors in the code
+            print("Unknown error occurred:", e)
