@@ -1,2 +1,5 @@
 /.pytest_cache/
 git update-index --assume-unchanged /data.py
+
+# Ignore the logs
+/logs/*.csv
