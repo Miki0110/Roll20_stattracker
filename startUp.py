@@ -1,5 +1,4 @@
 from selenium import webdriver
-import atexit
 from pathlib import Path
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -15,10 +14,6 @@ def start_driver():
         print('we in test')
     PATH = f"{cur_dir}/chromedriver.exe"
     driver = webdriver.Chrome(PATH)
-
-    # Register the shutdown protocall
-    atexit.register(lambda: exit_handler(driver))
-
     return driver
 
 
@@ -44,7 +39,3 @@ def loginRoll20(driver):
     p_input.send_keys(Keys.ENTER)
 
 
-# Function used to close down the Chromedriver
-def exit_handler(driver):
-    print("Closing down the Chromedriver")
-    driver.quit()

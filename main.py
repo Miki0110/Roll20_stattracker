@@ -1,11 +1,16 @@
+import os
+import sys
+import csv
+import time
+import ast
+import atexit
+import pandas as pd
 import startUp
 import playerClass as pc
 import dice_calculations as dc
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchWindowException, WebDriverException
-import sys
-import csv
-import time
+from fractions import Fraction
 
 
 # Defining a class for setting up the session
@@ -18,6 +23,12 @@ class Session:
         self.read_msgs = []  # Read message ids
         self.players = []  # Players objects made from data in data.py
         self.player_ids = []
+
+        # Register the shutdown protocall
+        atexit.register(lambda: self._exit_handler())
+
+        # Load logs if any are there
+        self.load_logs()
 
     # A function for checking stat calls
     def ret_input(self):
@@ -137,7 +148,6 @@ class Session:
             for player in self.players:
                 rolls, avg, w, b = player.curr_stats()
                 if b == -1:  # incase the player has not rolled yet
-                    print('here')
                     continue
                 cdfs.append(player.cdf)
                 inv_cdfs.append(player.inv_cdf)
@@ -238,26 +248,77 @@ class Session:
     # Function for logging the stats of the session
     def log_session(self):
         # Get the date for the filename
-        timestamp = time.strftime("%d-%m-%H-%M-%Y")
+        timestamp = time.strftime("%d-%m-%Y")
         filename = "Session_{}.csv".format(timestamp)
-        with open(f'logs/{filename}', "a", newline="") as csv_file:
-            writer = csv.writer(csv_file)
+        with open(f'logs/{filename}', "w", newline="") as csv_file:
+            writer = csv.writer(csv_file, delimiter=',')
             # Session sum-up
-            header = ["[Amount of rolls", "Average roll chance", "Best roll", "Worst roll]"]
-            output = session._stat_call(return_string=False)
+            header = ["Amount of rolls ", "Average roll chance ", "Best roll ", "Worst roll"]
+            output = self._stat_call(return_string=False)
             # Write out the session
             writer.writerow(header)
             writer.writerow(output)
 
             # Individual player log
-            header = ["[Player", "Rolls", "CDF", "Inv CDF]"]
+            header = ["Player", "ID", "Rolls", "CDF", "Inv CDF"]
             writer.writerow(header)
             for player in self.players:
                 name = player.name
+                pid = player.id
                 rolls = player.rolls
                 cdf = player.cdf
                 inv_cdf = player.inv_cdf
-                writer.writerow([name, rolls, cdf, inv_cdf])
+                writer.writerow([name, pid, rolls, cdf, inv_cdf])
+
+    # Function for loading logs
+    def load_logs(self):
+        # Check if there already is a log file
+        folder_path = os.path.join(os.getcwd(), "logs")
+        log_files = os.listdir(folder_path)
+        timestamp = time.strftime("%d-%m-%Y")
+        filename = "Session_{}.csv".format(timestamp)
+        # If there are none we simply return doing nothing
+        if filename not in log_files:
+            return
+        # In case there is a file but it is empty
+        if os.path.getsize(f'logs/{filename}') == 0:
+            return
+
+        print('Found previous session, loading the previous rolls into this session...')
+        # Load the file in
+        df = pd.read_csv(f'logs/{filename}', header=2)
+        # Extract the data, and evaluate those that include numbers
+        player_ids = df['ID'].values
+        names = df['Player'].values
+        rolls = df['Rolls'].apply(ast.literal_eval).values
+        cdfs = df['CDF'].values
+        cdfs = [eval(values) for values in cdfs]
+        inv_cdfs = df['Inv CDF'].values
+        inv_cdfs = [eval(values) for values in inv_cdfs]
+        for i, ids in enumerate(player_ids):
+            if ids in self.player_ids:
+                player = self.players[int(self.player_ids.index(ids) / 2)]
+            else:
+                # Create a player object for the person found
+                self.players.append(pc.Player(names[i], ids))
+                self.player_ids.append(str(names[i]).lower())
+                self.player_ids.append(ids)
+
+                player = self.players[-1]
+            for j in range(len(rolls[i])):
+                player.rolls.append(rolls[i][j])
+            for j in range(len(cdfs[i])):
+                player.cdf.append(cdfs[i][j])
+                player.inv_cdf.append(inv_cdfs[i][j])
+        return
+
+    # Function used to guarantee the Chromedriver is closed
+    def _exit_handler(self):
+        print("Closing down the Chromedriver")
+        if len(self.last_roll) >= 1:
+            print("Saving logs...")
+            self.log_session()
+        self.driver.quit()
 
 
 # MAIN LOOP
@@ -269,16 +330,14 @@ if __name__ == "__main__":
             session.go_through_players()  # check for rolls
             session.ret_input()  # check for commands
 
-        # Go through exceptions, since and act accordingly
+        # Go through exceptions, and act accordingly
         except NoSuchWindowException as e:  # In case the browser window is closed
-            print("The browser has been closed\nProceeding to save logs...")
+            print("The browser has been closed")
             # Check if the browser has been closed
             try:
-                session.driver.close()
+                session.driver.quit()
             except Exception as e:
                 pass
-            # Save the logs
-            session.log_session()
             # Exit the program
             sys.exit()
 
