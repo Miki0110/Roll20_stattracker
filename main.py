@@ -24,7 +24,7 @@ class Session:
         self.players = []  # Players objects made from data in data.py
         self.player_ids = []
 
-        # Register the shutdown protocall
+        # Register the shutdown protocol
         atexit.register(lambda: self._exit_handler())
 
         # Load logs if any are there
@@ -95,10 +95,16 @@ class Session:
                     m_output = self._stat_call(player)
                 else:
                     print("Command not recognised")
-                    return
+                    m_output = '**Command not recognised, format is as follows:**\n' \
+                               '```;player {Player name} {command}``'
             else:
                 print("Command not recognised")
-                return
+                m_output = '**Command not recognised, format is as follows:**\n' \
+                           '**Current requests**\n```;session {command}``*check rolls for the entire session*\n' \
+                           '```;player {Player name} {command}``*check rolls of a single player*\n' \
+                           '**Current commands**\n```;[request] last {number of rolls}``' \
+                           ' *Returns the chance for a combined number of rolls*\n' \
+                           '```;[request] stats`` *Returns the average and best rolls for the session*'
 
             # Print out the results found
             pc.print20(self.driver, '‎')
@@ -305,6 +311,8 @@ class Session:
                 self.player_ids.append(ids)
 
                 player = self.players[-1]
+
+            # Load the data in
             for j in range(len(rolls[i])):
                 player.rolls.append(rolls[i][j])
             for j in range(len(cdfs[i])):
