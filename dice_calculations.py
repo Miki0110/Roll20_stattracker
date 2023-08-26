@@ -131,7 +131,7 @@ def calc_dice(dice, roll_result):
 
     pos_rolls = powerList(dice)
     if pos_rolls > 50000:
-        pmf, cdf, inv_cdf = trail_and_error(dice, roll_result)
+        pmf, cdf, inv_cdf = trial_and_error(dice, roll_result)
         return mean, pmf, cdf, inv_cdf
 
     # Using the density and keys function I can extract all possible outcomes
@@ -256,7 +256,7 @@ def ret_outcomes(rolls):
 
 
 # This is a way to estimate results of many dice rolls
-def trail_and_error(dice, result):
+def trial_and_error(dice, result):
     from random import choices
 
     length = 1000000  # Reasons for this number is simply that around 1-10 seconds used on calculations is manageable

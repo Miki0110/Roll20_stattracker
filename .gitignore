@@ -1,5 +1,8 @@
 /.pytest_cache/
-git update-index --assume-unchanged /data.py
+/.idea/
+
+# ignore cookies
+roll20_cookies.txt
 
 # Ignore the logs
 /logs/*.csv

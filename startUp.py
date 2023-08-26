@@ -3,39 +3,58 @@ from pathlib import Path
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
+import json
+import os
+
+
+# Function to save cookies after manual login
+def save_cookies(driver, path="roll20_cookies.txt"):
+    """Save session cookies to a file.
+
+        Parameters:
+        - driver: The Selenium webdriver instance.
+        - path (str): Path to the file where cookies will be saved.
+        """
+    cookies = driver.get_cookies()
+    with open(path, "w") as file:
+        json.dump(cookies, file)
+
+
+# Function to load cookies into the driver
+def load_cookies(driver, path="roll20_cookies.txt"):
+    """Load session cookies from a file and add them to the driver.
+
+        Parameters:
+        - driver: The Selenium webdriver instance.
+        - path (str): Path to the file from which cookies will be loaded.
+    """
+    with open(path, "r") as file:
+        cookies = json.load(file)
+    for cookie in cookies:
+        driver.add_cookie(cookie)
 
 
 # Function for starting the chrome driver
 def start_driver():
     cur_dir = Path.cwd()
     if "\\test" in str(cur_dir):
-        cur_dir = Path.cwd().parent.as_posix()
         print('we in test')
-    PATH = f"{cur_dir}/chromedriver.exe"
-    driver = webdriver.Chrome(PATH)
+    driver = webdriver.Chrome()
+    if os.path.exists("roll20_cookies.txt"):
+        driver.get('https://roll20.net')
+        load_cookies(driver)
+        driver.refresh()
     return driver
 
 
 # Function for logging in to roll20
 def loginRoll20(driver):
-    from login import login_password, login_email
-
     # Open the website
     driver.get('https://roll20.net')
 
-    # Find the menu dropdown menu and click it
-    WebDriverWait(driver,15).until(EC.element_to_be_clickable((By.CLASS_NAME, "navbar-toggler"))).click()
+    # Wait for the login
+    WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "signin")))
 
-    # Find the sign in menu and click it
-    WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'//ul[@class="navbar-nav navbar-notifications"]//a[@id="menu-signin"]'))).click()
-
-    #write out password and login
-    driver.find_element(By.XPATH, '//input[@type="email"]').send_keys(login_email)
-    p_input = driver.find_element(By.XPATH, '//input[@type="password"]')
-    p_input.send_keys(login_password)
-
-    # Click signin
-    p_input.send_keys(Keys.ENTER)
-
-
+    # Check if the "signin" button is present
+    if len(driver.find_elements(By.ID, "signin")) > 0:
+        save_cookies(driver)
