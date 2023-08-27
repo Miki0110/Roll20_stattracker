@@ -1,3 +1,5 @@
+
+import signal
 import os
 import sys
 import csv
@@ -19,7 +21,6 @@ from fractions import Fraction
 class Session:
     def __init__(self):
         self.driver = startUp.start_driver()  # Driver for controlling chrome
-        startUp.loginRoll20(self.driver)  # Login to roll20
 
         self.last_roll = []  # Rolls and results seen during the session
         self.read_msgs = []  # Read message ids
@@ -36,6 +37,10 @@ class Session:
         self.display_queue = queue.Queue()
         self.display = threading.Thread(target=dg.run_gui, args=(self.display_queue,))
         self.display.start()
+
+        # Cookie thread
+        self.cookie_thread = threading.Thread(target=self.save_cookies_periodically)  # Save every 5 minutes
+        self.cookie_thread.start()
 
     def ret_input(self):
         """
@@ -145,6 +150,8 @@ class Session:
 
             # Create a player object for the person found
             self.players.append(pc.Player(p_name, p_id))
+            # Update the display list
+            self.display_queue.put(("players", self.players))
 
     def go_through_players(self):
         """
@@ -156,7 +163,7 @@ class Session:
                 self.last_roll.append(lr)
                 # Display the roll
                 dice, modifier = pc.ret_dice(lr[0])
-                self.display_queue.put(([int(die) for die in dice], lr[1]-modifier))
+                self.display_queue.put(("rolls", [int(die) for die in dice], lr[1]-modifier))
 
     def _stat_call(self, target=None, return_string=True):
         """
@@ -357,9 +364,29 @@ class Session:
         if len(self.last_roll) >= 1:
             print("Saving logs...")
             self.log_session()
-        startUp.save_cookies(self.driver)
+        self.display.join()
+        self.cookie_thread.join()
         self.driver.quit()
 
+    def save_cookies_periodically(self, interval=30):
+        """
+        Periodically saves cookies from the given driver.
+
+        Parameters:
+        - interval: Time interval (in seconds) between cookie saves. Default is 30 seconds (½ minute).
+        """
+        while True:
+            startUp.save_cookies(self.driver)
+            time.sleep(interval)  # Sleep for the defined interval before saving again.
+
+def signal_handler(sig, frame):
+    print("Signal received:", sig)
+    session._exit_handler()
+    sys.exit(0)
+
+# Catching SIGINT (Ctrl+C) and SIGTERM (terminate command)
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 # MAIN LOOP
 if __name__ == "__main__":
