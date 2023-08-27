@@ -8,12 +8,14 @@ import pandas as pd
 import startUp
 import playerClass as pc
 import dice_calculations as dc
+import display_gui as dg
+import queue
+import threading
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchWindowException, WebDriverException
 from fractions import Fraction
 
 
-# Defining a class for setting up the session
 class Session:
     def __init__(self):
         self.driver = startUp.start_driver()  # Driver for controlling chrome
@@ -30,9 +32,15 @@ class Session:
         # Load logs if any are there
         self.load_logs()
 
-    # A function for checking stat calls
-    def ret_input(self):
+        # GUI variables
+        self.display_queue = queue.Queue()
+        self.display = threading.Thread(target=dg.run_gui, args=(self.display_queue,))
+        self.display.start()
 
+    def ret_input(self):
+        """
+        This function is used to check for messages that contain the ';;' input
+        """
         # First check for messages that contain the ';;' input
         try:
             texts = self.driver.find_elements(By.XPATH, '//*[@id="textchat"]//div[contains(text(),";;")]')
@@ -112,8 +120,10 @@ class Session:
             pc.print20(self.driver, m_output)
             pc.print20(self.driver, f'**--------------------**')
 
-    # Look for players in the session
     def find_players(self):
+        """
+        Function that finds all the players in the session
+        """
         # Find the player banners
         ps = self.driver.find_elements(By.XPATH, f'//*[@class="player ui-droppable ui-draggable"]')
 
@@ -136,15 +146,28 @@ class Session:
             # Create a player object for the person found
             self.players.append(pc.Player(p_name, p_id))
 
-    # Function for checking every player individually
     def go_through_players(self):
+        """
+        Function that goes through every player and checks if they have rolled.
+        """
         for i, player in enumerate(self.players):
             lr = player.check_roll(self.driver)
             if lr != 0 and lr is not None:
                 self.last_roll.append(lr)
+                # Display the roll
+                dice, modifier = pc.ret_dice(lr[0])
+                self.display_queue.put(([int(die) for die in dice], lr[1]-modifier))
 
-    # Function that returns the stats of a person or session
     def _stat_call(self, target=None, return_string=True):
+        """
+        Function that returns the stats of a person or session
+
+        Parameters:
+        - target: The player object retrieve the roll(s) for.
+        - return_string: Whether the function should return a string or not.
+        returns:
+        - m_output: The message to be sent to the chat channel.
+        """
         if target is None:
             best = [10, 10, 10, 'name']
             worst = [10, 10, 10, 'name']
@@ -210,6 +233,14 @@ class Session:
 
     # Function that calculates and returns the last roll(s)
     def _last_call(self, target=None, amount=1):
+        """
+        Function that calculates the last roll(s) and returns the results
+        Parameters:
+        - target: The player object to calculate the last roll(s) for.
+        - amount: The amount of last rolls to calculate.
+        returns:
+        - m_output: The message to be sent to the chat channel.
+        """
         if target is None:
             rolls = []
             results = []
@@ -251,8 +282,8 @@ class Session:
                 m_output = f'Too many dice to calculate'
         return m_output
 
-    # Function for logging the stats of the session
     def log_session(self):
+        """Logs the session to a csv file in the logs folder"""
         # Get the date for the filename
         timestamp = time.strftime("%d-%m-%Y")
         filename = "Session_{}.csv".format(timestamp)
@@ -276,8 +307,8 @@ class Session:
                 inv_cdf = player.inv_cdf
                 writer.writerow([name, pid, rolls, cdf, inv_cdf])
 
-    # Function for loading logs
     def load_logs(self):
+        """Function for loading the logs from the previous session"""
         # Check if there already is a log file
         folder_path = os.path.join(os.getcwd(), "logs")
         log_files = os.listdir(folder_path)
@@ -320,8 +351,8 @@ class Session:
                 player.inv_cdf.append(inv_cdfs[i][j])
         return
 
-    # Function used to guarantee the Chromedriver is closed
     def _exit_handler(self):
+        """Function used to guarantee the Chromedriver is closed"""
         print("Closing down the Chromedriver")
         if len(self.last_roll) >= 1:
             print("Saving logs...")
