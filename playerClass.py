@@ -12,6 +12,7 @@ class Player:
         self.rolls = []
         self.cdf = []
         self.inv_cdf = []
+        self.past_n_probabilities = []  # Store probabilities of last n rolls
 
     def check_roll(self, driver):
         try:
@@ -51,6 +52,11 @@ class Player:
 
                 self.rolls.append(roll_inp)
                 self.rolls.append(result)
+                # Update the past_n_probabilities list with the new probability
+                if len(self.past_n_probabilities) >= 10:
+                    self.past_n_probabilities.pop(0)  # Remove the oldest probability if list size exceeds 10
+                self.past_n_probabilities.append(float(pmf))
+
                 return roll_inp, result, self.name
             else:  # If the message contains too many dice, the cdf and pdf will be skipped
                 print(f'Not possible')

@@ -326,6 +326,7 @@ class Session:
         if len(self.last_roll) >= 1:
             print("Saving logs...")
             self.log_session()
+        startUp.save_cookies(self.driver)
         self.driver.quit()
 
 

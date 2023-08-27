@@ -52,9 +52,10 @@ def loginRoll20(driver):
     # Open the website
     driver.get('https://roll20.net')
 
-    # Wait for the login
-    WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "signin")))
+    if not os.path.exists("roll20_cookies.txt"):
+        # Wait for the login
+        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, "signin")))
 
-    # Check if the "signin" button is present
-    if len(driver.find_elements(By.ID, "signin")) > 0:
-        save_cookies(driver)
+        # Check if the "signin" button is present
+        if len(driver.find_elements(By.ID, "signin")) > 0:
+            save_cookies(driver)
