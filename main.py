@@ -27,20 +27,17 @@ class Session:
         self.players = []  # Players objects made from data in data.py
         self.player_ids = []
 
+        # GUI variables
+        self.display_queue = queue.Queue()
+        self.display = threading.Thread(target=dg.run_gui, args=(self.display_queue,))
+        self.display.start()
+
         # Register the shutdown protocol
         atexit.register(lambda: self._exit_handler())
 
         # Load logs if any are there
         self.load_logs()
 
-        # GUI variables
-        self.display_queue = queue.Queue()
-        self.display = threading.Thread(target=dg.run_gui, args=(self.display_queue,))
-        self.display.start()
-
-        # Cookie thread
-        self.cookie_thread = threading.Thread(target=self.save_cookies_periodically)  # Save every 5 minutes
-        self.cookie_thread.start()
 
     def ret_input(self):
         """
@@ -356,6 +353,8 @@ class Session:
             for j in range(len(cdfs[i])):
                 player.cdf.append(cdfs[i][j])
                 player.inv_cdf.append(inv_cdfs[i][j])
+            # Send the players in the queue
+            self.display_queue.put(("players", self.players))
         return
 
     def _exit_handler(self):
@@ -365,19 +364,7 @@ class Session:
             print("Saving logs...")
             self.log_session()
         self.display.join()
-        self.cookie_thread.join()
         self.driver.quit()
-
-    def save_cookies_periodically(self, interval=30):
-        """
-        Periodically saves cookies from the given driver.
-
-        Parameters:
-        - interval: Time interval (in seconds) between cookie saves. Default is 30 seconds (½ minute).
-        """
-        while True:
-            startUp.save_cookies(self.driver)
-            time.sleep(interval)  # Sleep for the defined interval before saving again.
 
 def signal_handler(sig, frame):
     print("Signal received:", sig)

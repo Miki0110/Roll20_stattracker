@@ -21,19 +21,31 @@ class DiceStatisticsApp(tk.Tk):
         self.subplot = self.figure.add_subplot(111)
 
         self.canvas = FigureCanvasTkAgg(self.figure, self)
-        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        #self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Add a frame for player statistics
+        self.stats_frame = ttk.Frame(self)
+        #self.stats_frame.pack(pady=20)
+        self.stats_labels = {}
 
         # Setup choice between player and general statistics
         self.player_var = tk.StringVar(self)
         self.dropdown = ttk.Combobox(self, textvariable=self.player_var)
         self.populate_dropdown()
-        self.dropdown.pack(pady=20)
+        #self.dropdown.pack(pady=20)
 
         # Last roll slider
         self.last_slider = tk.Scale(self, from_=1, to=10, orient=tk.HORIZONTAL, command=self.slider_changed)
-        self.last_slider.pack(pady=20)
-        self.last_slider.pack_forget()  # Hide the slider by default
+        #self.last_slider.pack(pady=20)
+        #self.last_slider.pack_forget()  # Hide the slider by default
         self.dropdown.bind("<<ComboboxSelected>>", self.handle_dropdown_change) # Bind the dropdown to the handler
+
+        # Use grid layout for better control
+        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=4)
+        self.dropdown.grid(row=5, column=0)
+        self.last_slider.grid(row=6, column=0)
+        self.last_slider.grid_forget()  # Hide the slider by default
+        self.stats_frame.grid(row=0, column=1, rowspan=4, sticky='n')
 
     def plot_data(self, dice, outcome):
         # find out what we are plotting
@@ -61,6 +73,7 @@ class DiceStatisticsApp(tk.Tk):
             pmf = self.compute_pmf(rolls)
             # Set up the subplots
             self.setup_subplots(pmf, sum(results), rolls)
+        self.update_player_stats_display()
         self.canvas.draw()
 
     def populate_dropdown(self):
@@ -69,12 +82,14 @@ class DiceStatisticsApp(tk.Tk):
         self.dropdown['values'] = ["Last roll"] + player_names
         if player_names:
             self.dropdown.current(0)
+        self.update_player_stats_display()
 
     def handle_dropdown_change(self, event):
         if self.dropdown.get() == "Last roll":
-            self.last_slider.pack_forget()
+            #self.last_slider.pack_forget()
+            self.last_slider.grid_forget()  # Hide the slider by default
         else:
-            self.last_slider.pack()
+            self.last_slider.grid(row=6, column=0)
 
     def slider_changed(self, event):
         self.plot_data(None, None)
@@ -113,6 +128,39 @@ class DiceStatisticsApp(tk.Tk):
         fig.tight_layout()
         return ax1, ax2
 
+    def update_player_stats_display(self):
+        """Update the player stats display with names and their averages."""
+        # Clear the previous labels
+        for label in self.stats_labels.values():
+            label[0].grid_forget()
+            label[0].destroy()
+            label[1].grid_forget()
+            label[1].destroy()
+        self.stats_labels.clear()
+
+        # Create the new labels
+        for idx, player in enumerate(self.players):
+            _, avg_stat, _, _ = player.curr_stats()
+            avg_stat = float(avg_stat) * 100
+            color = self.get_color(avg_stat)
+
+            name_label = ttk.Label(self.stats_frame, text=f"{player.name}:", font=("Arial", 12))
+            name_label.grid(row=idx, column=0, sticky='w', pady=5)
+
+            avg_label = ttk.Label(self.stats_frame, text=f"{avg_stat:.2f}%", font=("Arial", 12), foreground=color)
+            avg_label.grid(row=idx, column=1, sticky='w', pady=5)
+
+            self.stats_labels[player.name] = (name_label, avg_label)
+
+    @staticmethod
+    def get_color(average):
+        """Return color based on the average."""
+        if average < 55:
+            return "green"
+        elif average < 45:
+            return "yellow"
+        else:
+            return "red"
     def check_queue(self):
         try:
             package = self.queue.get_nowait()
