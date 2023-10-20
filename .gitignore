@@ -3,6 +3,7 @@
 
 # ignore cookies
 roll20_cookies.txt
+roll20_cookies.pkl
 
 # Ignore the logs
 /logs/*.csv

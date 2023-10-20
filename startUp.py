@@ -1,14 +1,15 @@
 from selenium import webdriver
 from pathlib import Path
-import json
+import pickle
 import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
 
 # Function to save cookies after manual login
-def save_cookies(driver, path="roll20_cookies.txt"):
+def save_cookies(driver, path="roll20_cookies.pkl"):
     """Save session cookies to a file.
 
         Parameters:
@@ -16,37 +17,44 @@ def save_cookies(driver, path="roll20_cookies.txt"):
         - path (str): Path to the file where cookies will be saved.
         """
     cookies = driver.get_cookies()
-    with open(path, "w") as file:
-        json.dump(cookies, file)
+    with open(path, 'wb') as handle:
+        pickle.dump(cookies, handle)
 
 
 # Function to load cookies into the driver
-def load_cookies(driver, path="roll20_cookies.txt"):
+def load_cookies(driver, path="roll20_cookies.pkl"):
     """Load session cookies from a file and add them to the driver.
 
         Parameters:
         - driver: The Selenium webdriver instance.
         - path (str): Path to the file from which cookies will be loaded.
     """
-    with open(path, "r") as file:
-        cookies = json.load(file)
+    with open(path, 'rb') as handle:
+        cookies = pickle.load(handle)
     for cookie in cookies:
         driver.add_cookie(cookie)
+    driver.refresh()
 
 
 # Function for starting the chrome driver
 def start_driver():
+    # Check if we are in the test folder
     cur_dir = Path.cwd()
     if "\\test" in str(cur_dir):
         print('we in test')
-    driver = webdriver.Chrome()
-    if os.path.exists("roll20_cookies.txt"):
+
+    # Add extension to chrome
+    options = webdriver.ChromeOptions()
+    options.add_extension('Beyond-20.crx')
+    # Start the chrome driver
+    driver = webdriver.Chrome(options=options)
+
+    if os.path.exists("roll20_cookies.pkl"):
         driver.get('https://roll20.net')
         load_cookies(driver)
-        driver.refresh()
 
         # Maximum retries
-        max_retries = 5
+        max_retries = 3
         for attempt in range(max_retries):
             try:
                 # Wait for a unique element of the logged-in page.
@@ -62,6 +70,7 @@ def start_driver():
                 else:
                     print(f"Attempt {attempt + 1} failed.")
                     print("All attempts to auto-login failed. Please log in manually.")
+                    WebDriverWait(driver, 120).until(element_present)
     else:
         print("No cookies found. Please log in manually.")
         driver.get('https://roll20.net')
