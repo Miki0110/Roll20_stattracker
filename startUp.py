@@ -71,12 +71,13 @@ def start_driver():
                     print(f"Attempt {attempt + 1} failed.")
                     print("All attempts to auto-login failed. Please log in manually.")
                     WebDriverWait(driver, 120).until(element_present)
+                    save_cookies(driver)
     else:
         print("No cookies found. Please log in manually.")
         driver.get('https://roll20.net')
         try:
             element_present = EC.presence_of_element_located((By.CLASS_NAME, 'avatar'))
-            WebDriverWait(driver, 60).until(element_present)
+            WebDriverWait(driver, 120).until(element_present)
             save_cookies(driver)
         except TimeoutException:
             print("Timed out waiting for page to load")

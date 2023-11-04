@@ -15,7 +15,6 @@ import queue
 import threading
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchWindowException, WebDriverException
-from fractions import Fraction
 
 
 class Session:

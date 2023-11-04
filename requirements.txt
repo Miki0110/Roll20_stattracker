@@ -1,0 +1,8 @@
+matplotlib==3.5.3
+numpy==1.25.2
+pandas==2.0.3
+schedule==1.1.0
+scipy==1.9.1
+selenium==4.11.2
+sympy==1.10.1
+tk>=8.6.12
